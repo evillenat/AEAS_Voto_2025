@@ -8,12 +8,7 @@
     <meta name="description" content="Sistema seguro de voto electrónico">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗳️</text></svg>">
     <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗳️</text></svg>">
-    
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
-    
+    <link rel="manifest" href="manifest.json">
     <style>
         :root {
             --primary-color: #2c3e50;
@@ -36,6 +31,7 @@
             color: var(--dark-color);
             line-height: 1.6;
             min-height: 100vh;
+            padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
         }
         
         .container {
@@ -280,11 +276,6 @@
             border-left: 4px solid var(--danger-color);
         }
         
-        .alert-info {
-            background-color: rgba(52, 152, 219, 0.2);
-            border-left: 4px solid var(--secondary-color);
-        }
-        
         table {
             width: 100%;
             border-collapse: collapse;
@@ -324,26 +315,6 @@
         .action-buttons button {
             width: auto;
             flex: 1;
-        }
-        
-        .loading {
-            text-align: center;
-            padding: 20px;
-        }
-        
-        .spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid var(--secondary-color);
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 2s linear infinite;
-            margin: 0 auto 15px;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
         }
         
         @keyframes fadeIn {
@@ -419,12 +390,9 @@
             </div>
             
             <div class="card">
-                <h3>Base de Datos en la Nube</h3>
-                <p>Esta aplicación está conectada automáticamente a una base de datos en la nube. Todos los datos se guardan y sincronizan automáticamente.</p>
-                <div id="dbStatus" class="alert alert-info">
-                    <div class="spinner"></div>
-                    Conectando con la base de datos...
-                </div>
+                <h3>Instalar la aplicación</h3>
+                <p>Para una mejor experiencia, instale esta aplicación en su dispositivo.</p>
+                <button id="installInfoBtn">Cómo instalar</button>
             </div>
         </div>
 
@@ -498,10 +466,7 @@
             <div class="card">
                 <h3>Elecciones Activas</h3>
                 <div id="electionsList" class="election-list">
-                    <div class="loading">
-                        <div class="spinner"></div>
-                        <p>Cargando elecciones...</p>
-                    </div>
+                    <!-- Las elecciones se cargarán aquí dinámicamente -->
                 </div>
             </div>
 
@@ -516,9 +481,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td colspan="3" style="text-align: center;">Cargando datos...</td>
-                        </tr>
+                        <!-- Los datos de votantes se cargarán aquí dinámicamente -->
                     </tbody>
                 </table>
             </div>
@@ -532,10 +495,7 @@
                 <p id="electionDescriptionText">Descripción de la elección</p>
                 
                 <div id="candidatesList" class="candidate-list">
-                    <div class="loading">
-                        <div class="spinner"></div>
-                        <p>Cargando candidatos...</p>
-                    </div>
+                    <!-- Los candidatos se cargarán aquí dinámicamente -->
                 </div>
                 
                 <button id="submitVote" class="success" style="display: none; margin-top: 20px;">Confirmar Voto</button>
@@ -550,35 +510,59 @@
                     <div style="font-size: 4rem;">✅</div>
                 </div>
                 <h2 style="text-align: center;">¡Voto Registrado Exitosamente!</h2>
-                <p style="text-align: center;">Su voto ha sido registrado de manera segura y anónima en la nube.</p>
+                <p style="text-align: center;">Su voto ha sido registrado de manera segura y anónima.</p>
                 <p style="text-align: center;">Gracias por participar en el proceso electoral.</p>
                 <button id="backToHomeFromConfirmation" class="success">Volver al Inicio</button>
+            </div>
+        </div>
+
+        <!-- Página de información de instalación -->
+        <div id="installInfoPage" class="page">
+            <button class="back-button" id="backFromInstallInfo">← Volver</button>
+            <div class="card">
+                <h2>Instalar la Aplicación</h2>
+                <div class="install-step">
+                    <h3>📱 En Android:</h3>
+                    <p>1. Abra el menú de opciones (tres puntos) en Chrome</p>
+                    <p>2. Seleccione "Agregar a la pantalla de inicio"</p>
+                    <p>3. Confirme la instalación</p>
+                </div>
+                <div class="install-step">
+                    <h3>📱 En iPhone/iPad:</h3>
+                    <p>1. Pulse el ícono de compartir (cuadrado con flecha)</p>
+                    <p>2. Desplácese y seleccione "Agregar a pantalla de inicio"</p>
+                    <p>3. Confirme la instalación</p>
+                </div>
+                <button id="tryInstallBtn">Intentar Instalación Automática</button>
             </div>
         </div>
     </div>
 
     <script>
-        // Configuración de Firebase (YA CONFIGURADA - NO NECESITAS HACER NADA)
-        const firebaseConfig = {
-            apiKey: "AIzaSyD7p0v7p3Q3Q3Q3Q3Q3Q3Q3Q3Q3Q3Q3Q3Q3Q3Q",
-            authDomain: "voto-electronico-udemy.firebaseapp.com",
-            projectId: "voto-electronico-udemy",
-            storageBucket: "voto-electronico-udemy.appspot.com",
-            messagingSenderId: "123456789012",
-            appId: "1:123456789012:web:abcdefghijklmnopqrstuv"
-        };
+        // Datos de ejemplo para la demostración
+        let elections = [
+            {
+                id: 1,
+                name: "Elección de Representante Estudiantil",
+                description: "Elección para elegir al representante estudiantil del año 2023",
+                candidates: ["María González", "Carlos Rodríguez", "Ana Martínez"],
+                votes: {},
+                voters: ["votante1@ejemplo.com", "votante2@ejemplo.com", "votante3@ejemplo.com"]
+            },
+            {
+                id: 2,
+                name: "Elección de Comité de Empresa",
+                description: "Elección para los miembros del comité de empresa",
+                candidates: ["Juan Pérez", "Laura Sánchez", "Pedro López", "Sofía García"],
+                votes: {},
+                voters: ["empleado1@empresa.com", "empleado2@empresa.com", "empleado3@empresa.com"]
+            }
+        ];
 
-        // Inicializar Firebase
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-        const auth = firebase.auth();
-
-        // Variables globales
         let currentUser = null;
         let currentElection = null;
         let selectedCandidate = null;
         let deferredPrompt = null;
-        let elections = [];
 
         // Elementos del DOM
         const pages = {
@@ -587,200 +571,102 @@
             voterLogin: document.getElementById('voterLoginPage'),
             adminPanel: document.getElementById('adminPanelPage'),
             voting: document.getElementById('votingPage'),
-            voteConfirmation: document.getElementById('voteConfirmationPage')
+            voteConfirmation: document.getElementById('voteConfirmationPage'),
+            installInfo: document.getElementById('installInfoPage')
         };
 
-        // Inicializar la aplicación
-        document.addEventListener('DOMContentLoaded', function() {
-            initializeApp();
-            setupEventListeners();
+        // Botones de navegación
+        document.getElementById('adminCard').addEventListener('click', () => showPage('adminLogin'));
+        document.getElementById('voterCard').addEventListener('click', () => showPage('voterLogin'));
+        document.getElementById('backToHomeFromAdminLogin').addEventListener('click', () => showPage('home'));
+        document.getElementById('backToHomeFromVoterLogin').addEventListener('click', () => showPage('home'));
+        document.getElementById('backFromAdminPanel').addEventListener('click', () => {
+            currentUser = null;
+            showPage('home');
+        });
+        document.getElementById('backFromVoting').addEventListener('click', () => {
+            if (currentUser && currentUser.type === 'voter') {
+                showPage('voterLogin');
+            } else {
+                showPage('home');
+            }
+        });
+        document.getElementById('backToHomeFromConfirmation').addEventListener('click', () => {
+            currentUser = null;
+            showPage('home');
+        });
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            currentUser = null;
+            document.getElementById('logoutBtn').style.display = 'none';
+            showPage('home');
+        });
+        document.getElementById('installInfoBtn').addEventListener('click', () => showPage('installInfo'));
+        document.getElementById('backFromInstallInfo').addEventListener('click', () => showPage('home'));
+        document.getElementById('tryInstallBtn').addEventListener('click', () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('Usuario aceptó la instalación');
+                    }
+                    deferredPrompt = null;
+                });
+            } else {
+                showAlert('adminAlert', 'La instalación automática no está disponible. Siga las instrucciones manuales.', 'error');
+            }
         });
 
-        function initializeApp() {
-            // Verificar conexión con Firebase
-            checkFirebaseConnection();
-            
-            // Cargar elecciones desde Firebase
-            loadElectionsFromFirebase();
-            
-            // Verificar si la app ya está instalada
-            if (window.matchMedia('(display-mode: standalone)').matches) {
-                document.getElementById('installBtn').style.display = 'none';
-            }
-        }
-
-        function setupEventListeners() {
-            // Botones de navegación
-            document.getElementById('adminCard').addEventListener('click', () => showPage('adminLogin'));
-            document.getElementById('voterCard').addEventListener('click', () => showPage('voterLogin'));
-            document.getElementById('backToHomeFromAdminLogin').addEventListener('click', () => showPage('home'));
-            document.getElementById('backToHomeFromVoterLogin').addEventListener('click', () => showPage('home'));
-            document.getElementById('backFromAdminPanel').addEventListener('click', () => {
-                currentUser = null;
-                showPage('home');
-            });
-            document.getElementById('backFromVoting').addEventListener('click', () => {
-                if (currentUser && currentUser.type === 'voter') {
-                    showPage('voterLogin');
-                } else {
-                    showPage('home');
-                }
-            });
-            document.getElementById('backToHomeFromConfirmation').addEventListener('click', () => {
-                currentUser = null;
-                showPage('home');
-            });
-            document.getElementById('logoutBtn').addEventListener('click', () => {
-                currentUser = null;
-                document.getElementById('logoutBtn').style.display = 'none';
-                showPage('home');
-            });
-
-            // Formularios
-            document.getElementById('adminLoginForm').addEventListener('submit', handleAdminLogin);
-            document.getElementById('voterLoginForm').addEventListener('submit', handleVoterLogin);
-            document.getElementById('createElectionForm').addEventListener('submit', handleCreateElection);
-            document.getElementById('submitVote').addEventListener('click', handleVoteSubmission);
-
-            // Instalación PWA
-            window.addEventListener('beforeinstallprompt', (e) => {
-                e.preventDefault();
-                deferredPrompt = e;
-                document.getElementById('installBtn').style.display = 'block';
-            });
-
-            document.getElementById('installBtn').addEventListener('click', () => {
-                if (deferredPrompt) {
-                    deferredPrompt.prompt();
-                    deferredPrompt.userChoice.then((choiceResult) => {
-                        if (choiceResult.outcome === 'accepted') {
-                            document.getElementById('installBtn').style.display = 'none';
-                        }
-                        deferredPrompt = null;
-                    });
-                }
-            });
-        }
+        // Formularios
+        document.getElementById('adminLoginForm').addEventListener('submit', handleAdminLogin);
+        document.getElementById('voterLoginForm').addEventListener('submit', handleVoterLogin);
+        document.getElementById('createElectionForm').addEventListener('submit', handleCreateElection);
+        document.getElementById('submitVote').addEventListener('click', handleVoteSubmission);
 
         // Función para mostrar una página específica
         function showPage(pageName) {
+            // Ocultar todas las páginas
             Object.values(pages).forEach(page => {
                 page.classList.remove('active');
             });
+            
+            // Mostrar la página solicitada
             pages[pageName].classList.add('active');
         }
 
-        // Verificar conexión con Firebase
-        function checkFirebaseConnection() {
-            const dbStatus = document.getElementById('dbStatus');
-            
-            db.collection('connection_test').doc('test').set({
-                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                status: 'connected'
-            })
-            .then(() => {
-                dbStatus.innerHTML = '✅ Conectado a la base de datos en la nube';
-                dbStatus.className = 'alert alert-success';
-            })
-            .catch((error) => {
-                dbStatus.innerHTML = '⚠️ Error de conexión. Usando almacenamiento local.';
-                dbStatus.className = 'alert alert-error';
-                console.error('Error de Firebase:', error);
-            });
-        }
-
-        // Cargar elecciones desde Firebase
-        function loadElectionsFromFirebase() {
-            db.collection('elections').onSnapshot((snapshot) => {
-                elections = [];
-                snapshot.forEach((doc) => {
-                    elections.push({
-                        id: doc.id,
-                        ...doc.data()
-                    });
-                });
-                
-                // Si estamos en el panel de admin, actualizar la vista
-                if (currentUser && currentUser.type === 'admin') {
-                    loadAdminPanel();
-                }
-            }, (error) => {
-                console.error('Error cargando elecciones:', error);
-                showAlert('adminAlert', 'Error cargando elecciones. Usando datos locales.', 'error');
-            });
-        }
-
         // Manejo del login del administrador
-        async function handleAdminLogin(e) {
+        function handleAdminLogin(e) {
             e.preventDefault();
             
             const email = document.getElementById('adminEmail').value;
             const password = document.getElementById('adminPassword').value;
             const dni = document.getElementById('adminDNI').value;
             
-            // Verificar credenciales del administrador
+            // Validación con las credenciales proporcionadas
             if (email === 'edujavi01@gmail.com' && password === 'alfa72567' && dni === '46122321') {
-                try {
-                    // Crear o verificar usuario administrador en Firebase
-                    const userCredential = await auth.signInWithEmailAndPassword(email, password);
-                    currentUser = { 
-                        type: 'admin', 
-                        email: email,
-                        uid: userCredential.user.uid
-                    };
-                    
-                    document.getElementById('logoutBtn').style.display = 'block';
-                    showPage('adminPanel');
-                    loadAdminPanel();
-                } catch (error) {
-                    // Si el usuario no existe, crearlo
-                    if (error.code === 'auth/user-not-found') {
-                        try {
-                            const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-                            currentUser = { 
-                                type: 'admin', 
-                                email: email,
-                                uid: userCredential.user.uid
-                            };
-                            
-                            document.getElementById('logoutBtn').style.display = 'block';
-                            showPage('adminPanel');
-                            loadAdminPanel();
-                        } catch (createError) {
-                            showAlert('adminAlert', 'Error creando usuario administrador: ' + createError.message, 'error');
-                        }
-                    } else {
-                        showAlert('adminAlert', 'Error de autenticación: ' + error.message, 'error');
-                    }
-                }
+                currentUser = { type: 'admin', email };
+                document.getElementById('logoutBtn').style.display = 'block';
+                showPage('adminPanel');
+                loadAdminPanel();
             } else {
                 showAlert('adminAlert', 'Credenciales incorrectas. Intente nuevamente.', 'error');
             }
         }
 
         // Manejo del login del votante
-        async function handleVoterLogin(e) {
+        function handleVoterLogin(e) {
             e.preventDefault();
             
             const email = document.getElementById('voterEmail').value;
             
-            // Buscar elecciones donde este correo esté registrado
+            // Verificar si el correo está registrado en alguna elección
             const voterElections = elections.filter(election => 
-                election.voters && election.voters.includes(email)
+                election.voters.includes(email)
             );
             
             if (voterElections.length > 0) {
-                // Verificar si el votante ya votó
-                const election = voterElections[0];
-                const hasVoted = election.votes && election.votes[email] !== undefined;
-                
-                if (hasVoted) {
-                    showAlert('voteAlert', 'Usted ya ha votado en esta elección.', 'error');
-                    return;
-                }
-                
                 currentUser = { type: 'voter', email };
-                currentElection = election;
+                // Mostrar la primera elección disponible para este votante
+                currentElection = voterElections[0];
                 showPage('voting');
                 loadVotingInterface();
             } else {
@@ -790,15 +676,16 @@
 
         // Cargar el panel de administración
         function loadAdminPanel() {
+            // Cargar lista de elecciones
             const electionsList = document.getElementById('electionsList');
+            electionsList.innerHTML = '';
             
             if (elections.length === 0) {
                 electionsList.innerHTML = '<p>No hay elecciones creadas aún.</p>';
             } else {
-                electionsList.innerHTML = '';
                 elections.forEach(election => {
-                    const totalVotes = election.votes ? Object.keys(election.votes).length : 0;
-                    const totalVoters = election.voters ? election.voters.length : 0;
+                    const totalVotes = Object.keys(election.votes).length;
+                    const totalVoters = election.voters.length;
                     
                     const electionCard = document.createElement('div');
                     electionCard.className = 'election-card card';
@@ -807,14 +694,15 @@
                         <p>${election.description}</p>
                         <p><strong>Progreso:</strong> ${totalVotes}/${totalVoters} votos</p>
                         <div class="action-buttons">
-                            <button onclick="viewElectionResults('${election.id}')" class="success">Ver Resultados</button>
-                            <button onclick="deleteElection('${election.id}')" class="danger">Eliminar</button>
+                            <button onclick="viewElectionResults(${election.id})" class="success">Ver Resultados</button>
+                            <button onclick="deleteElection(${election.id})" class="danger">Eliminar</button>
                         </div>
                     `;
                     electionsList.appendChild(electionCard);
                 });
             }
             
+            // Cargar reporte de votantes
             loadVotersReport();
         }
 
@@ -827,25 +715,23 @@
                 votersTable.innerHTML = '<tr><td colspan="3" style="text-align: center;">No hay datos de votantes</td></tr>';
             } else {
                 elections.forEach(election => {
-                    if (election.voters) {
-                        election.voters.forEach(voterEmail => {
-                            const hasVoted = election.votes && election.votes[voterEmail] !== undefined;
-                            
-                            const row = document.createElement('tr');
-                            row.innerHTML = `
-                                <td>${voterEmail}</td>
-                                <td>${election.name}</td>
-                                <td>${hasVoted ? '✅ Votó' : '⏳ Pendiente'}</td>
-                            `;
-                            votersTable.appendChild(row);
-                        });
-                    }
+                    election.voters.forEach(voterEmail => {
+                        const hasVoted = election.votes && election.votes[voterEmail] !== undefined;
+                        
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${voterEmail}</td>
+                            <td>${election.name}</td>
+                            <td>${hasVoted ? '✅ Votó' : '⏳ Pendiente'}</td>
+                        `;
+                        votersTable.appendChild(row);
+                    });
                 });
             }
         }
 
-        // Crear nueva elección
-        async function handleCreateElection(e) {
+        // Manejar la creación de una nueva elección
+        function handleCreateElection(e) {
             e.preventDefault();
             
             const name = document.getElementById('electionName').value;
@@ -853,40 +739,47 @@
             const candidatesInput = document.getElementById('candidates').value;
             const voterEmailsInput = document.getElementById('voterEmails').value;
             
+            // Separar los candidatos por comas y limpiar espacios
             const candidates = candidatesInput.split(',').map(candidate => candidate.trim());
             const voters = voterEmailsInput.split(',').map(email => email.trim());
             
+            // Validar que haya al menos 2 candidatos
             if (candidates.length < 2) {
                 showAlert('adminAlert', 'Debe haber al menos 2 candidatos.', 'error');
                 return;
             }
             
+            // Validar que haya al menos 1 votante
             if (voters.length < 1) {
                 showAlert('adminAlert', 'Debe haber al menos 1 votante.', 'error');
                 return;
             }
             
-            try {
-                // Guardar en Firebase
-                const docRef = await db.collection('elections').add({
-                    name,
-                    description,
-                    candidates,
-                    voters,
-                    votes: {},
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    createdBy: currentUser.uid
-                });
-                
-                document.getElementById('createElectionForm').reset();
-                showAlert('adminAlert', 'Elección creada exitosamente en la nube.', 'success');
-            } catch (error) {
-                console.error('Error creando elección:', error);
-                showAlert('adminAlert', 'Error creando elección: ' + error.message, 'error');
-            }
+            // Crear nueva elección
+            const newElection = {
+                id: elections.length > 0 ? Math.max(...elections.map(e => e.id)) + 1 : 1,
+                name,
+                description,
+                candidates,
+                votes: {},
+                voters
+            };
+            
+            elections.push(newElection);
+            
+            // Limpiar el formulario
+            document.getElementById('createElectionForm').reset();
+            
+            // Recargar el panel de administración
+            loadAdminPanel();
+            
+            showAlert('adminAlert', 'Elección creada exitosamente.', 'success');
+            
+            // Guardar en localStorage
+            saveData();
         }
 
-        // Cargar interfaz de votación
+        // Cargar la interfaz de votación
         function loadVotingInterface() {
             document.getElementById('electionTitle').textContent = currentElection.name;
             document.getElementById('electionDescriptionText').textContent = currentElection.description;
@@ -905,67 +798,68 @@
                 candidatesList.appendChild(candidateCard);
             });
             
-            document.getElementById('submitVote').style.display = 'block';
+            // Verificar si el usuario ya votó
+            if (currentElection.votes[currentUser.email] !== undefined) {
+                document.getElementById('submitVote').style.display = 'none';
+                showAlert('voteAlert', 'Usted ya ha votado en esta elección.', 'error');
+            } else {
+                document.getElementById('submitVote').style.display = 'block';
+            }
         }
 
-        // Seleccionar candidato
+        // Seleccionar un candidato
         function selectCandidate(candidateIndex, candidateElement) {
+            // Deseleccionar todos los candidatos
             document.querySelectorAll('.candidate-card').forEach(card => {
                 card.classList.remove('selected');
             });
+            
+            // Seleccionar el candidato clickeado
             candidateElement.classList.add('selected');
             selectedCandidate = candidateIndex;
         }
 
-        // Enviar voto
-        async function handleVoteSubmission() {
+        // Manejar el envío del voto
+        function handleVoteSubmission() {
             if (selectedCandidate === null) {
                 showAlert('voteAlert', 'Por favor, seleccione un candidato antes de votar.', 'error');
                 return;
             }
             
-            try {
-                // Actualizar en Firebase
-                const updatedVotes = {
-                    ...currentElection.votes,
-                    [currentUser.email]: selectedCandidate
-                };
-                
-                await db.collection('elections').doc(currentElection.id).update({
-                    votes: updatedVotes
-                });
-                
-                showPage('voteConfirmation');
-            } catch (error) {
-                console.error('Error registrando voto:', error);
-                showAlert('voteAlert', 'Error registrando voto: ' + error.message, 'error');
-            }
+            // Registrar el voto
+            currentElection.votes[currentUser.email] = selectedCandidate;
+            
+            // Guardar en localStorage
+            saveData();
+            
+            // Mostrar confirmación
+            showPage('voteConfirmation');
         }
 
-        // Ver resultados
-        async function viewElectionResults(electionId) {
+        // Ver resultados de una elección
+        function viewElectionResults(electionId) {
             const election = elections.find(e => e.id === electionId);
             if (!election) return;
             
+            // Calcular resultados
             const results = {};
             election.candidates.forEach((candidate, index) => {
                 results[index] = 0;
             });
             
-            if (election.votes) {
-                Object.values(election.votes).forEach(vote => {
-                    results[vote] = (results[vote] || 0) + 1;
-                });
-            }
+            Object.values(election.votes).forEach(vote => {
+                results[vote] = (results[vote] || 0) + 1;
+            });
             
+            // Mostrar resultados en un modal
             let resultsHTML = `<h3>Resultados: ${election.name}</h3>`;
-            resultsHTML += `<p>Total de votos: ${election.votes ? Object.keys(election.votes).length : 0}</p>`;
+            resultsHTML += `<p>Total de votos: ${Object.values(election.votes).length}</p>`;
             resultsHTML += '<div class="results-chart">';
             
             election.candidates.forEach((candidate, index) => {
                 const votes = results[index] || 0;
-                const totalVotes = election.votes ? Object.keys(election.votes).length : 1;
-                const percentage = totalVotes > 0 ? (votes / totalVotes * 100).toFixed(1) : 0;
+                const percentage = Object.values(election.votes).length > 0 ? 
+                    (votes / Object.values(election.votes).length * 100).toFixed(1) : 0;
                 
                 resultsHTML += `
                     <div class="result-bar">
@@ -979,6 +873,7 @@
             
             resultsHTML += '</div>';
             
+            // Crear modal de resultados
             const modal = document.createElement('div');
             modal.style.position = 'fixed';
             modal.style.top = '0';
@@ -1006,6 +901,7 @@
             modal.appendChild(modalContent);
             document.body.appendChild(modal);
             
+            // Cerrar modal al hacer clic fuera
             modal.onclick = (e) => {
                 if (e.target === modal) {
                     document.body.removeChild(modal);
@@ -1013,16 +909,12 @@
             };
         }
 
-        // Eliminar elección
-        async function deleteElection(electionId) {
+        // Eliminar una elección
+        function deleteElection(electionId) {
             if (confirm('¿Está seguro de que desea eliminar esta elección? Esta acción no se puede deshacer.')) {
-                try {
-                    await db.collection('elections').doc(electionId).delete();
-                    showAlert('adminAlert', 'Elección eliminada exitosamente.', 'success');
-                } catch (error) {
-                    console.error('Error eliminando elección:', error);
-                    showAlert('adminAlert', 'Error eliminando elección: ' + error.message, 'error');
-                }
+                elections = elections.filter(e => e.id !== electionId);
+                loadAdminPanel();
+                saveData();
             }
         }
 
@@ -1033,10 +925,96 @@
                 <div class="alert alert-${type}">${message}</div>
             `;
             
+            // Auto-ocultar la alerta después de 5 segundos
             setTimeout(() => {
                 alertContainer.innerHTML = '';
             }, 5000);
         }
+
+        // Guardar datos en localStorage
+        function saveData() {
+            localStorage.setItem('electionsData', JSON.stringify(elections));
+        }
+
+        // Cargar datos desde localStorage
+        function loadData() {
+            const savedData = localStorage.getItem('electionsData');
+            if (savedData) {
+                elections = JSON.parse(savedData);
+            }
+        }
+
+        // Service Worker para PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then((registration) => {
+                        console.log('SW registered: ', registration);
+                    })
+                    .catch((registrationError) => {
+                        console.log('SW registration failed: ', registrationError);
+                    });
+            });
+        }
+
+        // Manejar la instalación de la PWA
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            document.getElementById('installBtn').style.display = 'block';
+        });
+
+        document.getElementById('installBtn').addEventListener('click', () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('Usuario aceptó la instalación');
+                        document.getElementById('installBtn').style.display = 'none';
+                    }
+                    deferredPrompt = null;
+                });
+            }
+        });
+
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', () => {
+            showPage('home');
+            loadData();
+            
+            // Verificar si la app ya está instalada
+            if (window.matchMedia('(display-mode: standalone)').matches) {
+                document.getElementById('installBtn').style.display = 'none';
+            }
+        });
+    </script>
+
+    <script>
+        // Service Worker simplificado (se ejecutaría en un archivo separado en producción)
+        const staticCacheName = 'voto-electronico-v1';
+        const assets = [
+            '/',
+            '/index.html',
+            '/manifest.json'
+        ];
+
+        self.addEventListener('install', event => {
+            event.waitUntil(
+                caches.open(staticCacheName)
+                    .then(cache => {
+                        return cache.addAll(assets);
+                    })
+            );
+        });
+
+        self.addEventListener('fetch', event => {
+            event.respondWith(
+                caches.match(event.request)
+                    .then(response => {
+                        return response || fetch(event.request);
+                    })
+            );
+        });
     </script>
 </body>
 </html>
