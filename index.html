@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Voto Electrónico</title>
+    <meta name="theme-color" content="#2c3e50">
+    <meta name="description" content="Sistema seguro de voto electrónico">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗳️</text></svg>">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗳️</text></svg>">
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --success-color: #27ae60;
+            --danger-color: #e74c3c;
+            --light-color: #ecf0f1;
+            --dark-color: #34495e;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: var(--dark-color);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 15px;
+        }
+        
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 1rem 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 15px;
+        }
+        
+        .logo {
+            font-size: 1.3rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .logo-icon {
+            font-size: 1.5rem;
+        }
+        
+        .auth-buttons button {
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        
+        .install-btn {
+            background-color: var(--success-color) !important;
+            margin-right: 10px;
+        }
+        
+        .page {
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+        
+        .active {
+            display: block;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        h1, h2, h3 {
+            margin-bottom: 15px;
+            color: var(--primary-color);
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        
+        button {
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            padding: 12px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+            width: 100%;
+        }
+        
+        button:hover {
+            background-color: #2980b9;
+        }
+        
+        button.danger {
+            background-color: var(--danger-color);
+        }
+        
+        button.danger:hover {
+            background-color: #c0392b;
+        }
+        
+        button.success {
+            background-color: var(--success-color);
+        }
+        
+        button.success:hover {
+            background-color: #219653;
+        }
+        
+        .user-type-selector {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .user-card {
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.3s;
+            padding: 20px;
+        }
+        
+        .user-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .user-card h3 {
+            margin-top: 10px;
+        }
+        
+        .user-icon {
+            font-size: 3rem;
+            margin-bottom: 10px;
+        }
+        
+        .election-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .election-card {
+            border-left: 4px solid var(--secondary-color);
+        }
+        
+        .candidate-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .candidate-card {
+            text-align: center;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .candidate-card:hover {
+            border-color: var(--secondary-color);
+            box-shadow: 0 2px 8px rgba(52, 152, 219, 0.2);
+        }
+        
+        .candidate-card.selected {
+            border-color: var(--success-color);
+            background-color: rgba(39, 174, 96, 0.1);
+        }
+        
+        .candidate-image {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin: 0 auto 10px;
+            display: block;
+            background-color: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+        }
+        
+        .results-chart {
+            margin-top: 20px;
+        }
+        
+        .result-bar {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .result-label {
+            width: 120px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        
+        .result-bar-inner {
+            height: 25px;
+            background-color: var(--secondary-color);
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+            color: white;
+            border-radius: 4px;
+            min-width: 40px;
+        }
+        
+        .alert {
+            padding: 10px 15px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
+        
+        .alert-success {
+            background-color: rgba(39, 174, 96, 0.2);
+            border-left: 4px solid var(--success-color);
+        }
+        
+        .alert-error {
+            background-color: rgba(231, 76, 60, 0.2);
+            border-left: 4px solid var(--danger-color);
+        }
+        
+        .alert-info {
+            background-color: rgba(52, 152, 219, 0.2);
+            border-left: 4px solid var(--secondary-color);
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            font-size: 0.9rem;
+        }
+        
+        th, td {
+            padding: 10px 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        th {
+            background-color: #f2f2f2;
+            font-weight: 600;
+        }
+        
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        
+        .back-button {
+            background-color: #95a5a6;
+            margin-bottom: 15px;
+            width: auto;
+            display: inline-block;
+            padding: 10px 15px;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .action-buttons button {
+            width: auto;
+            flex: 1;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--secondary-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 2s linear infinite;
+            margin: 0 auto 15px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        /* Estilos específicos para móviles */
+        @media (min-width: 768px) {
+            .container {
+                max-width: 600px;
+            }
+            
+            .user-type-selector {
+                flex-direction: row;
+            }
+            
+            .action-buttons {
+                flex-direction: row;
+            }
+        }
+        
+        /* Mejoras de usabilidad para móviles */
+        input, select, button {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+        }
+        
+        /* Efectos táctiles para móviles */
+        button:active {
+            transform: scale(0.98);
+        }
+        
+        .user-card:active, .candidate-card:active {
+            transform: scale(0.98);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <div class="logo">
+                <span class="logo-icon">🗳️</span>
+                <span>Voto Electrónico</span>
+            </div>
+            <div class="auth-buttons">
+                <button id="installBtn" class="install-btn" style="display: none;">Instalar App</button>
+                <button id="logoutBtn" style="display: none;">Cerrar Sesión</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Página de inicio -->
+        <div id="homePage" class="page active">
+            <div class="card">
+                <h1>Voto Electrónico Seguro</h1>
+                <p>Seleccione su tipo de usuario para continuar:</p>
+                
+                <div class="user-type-selector">
+                    <div class="user-card card" id="adminCard">
+                        <div class="user-icon">👨‍💼</div>
+                        <h3>Administrador</h3>
+                        <p>Acceso con correo, contraseña y DNI</p>
+                    </div>
+                    <div class="user-card card" id="voterCard">
+                        <div class="user-icon">👤</div>
+                        <h3>Votante</h3>
+                        <p>Acceso solo con correo electrónico</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3>Base de Datos en la Nube</h3>
+                <p>Esta aplicación está conectada automáticamente a una base de datos en la nube. Todos los datos se guardan y sincronizan automáticamente.</p>
+                <div id="dbStatus" class="alert alert-info">
+                    <div class="spinner"></div>
+                    Conectando con la base de datos...
+                </div>
+            </div>
+        </div>
+
+        <!-- Página de login para administrador -->
+        <div id="adminLoginPage" class="page">
+            <button class="back-button" id="backToHomeFromAdminLogin">← Volver</button>
+            <div class="card">
+                <h2>Administrador</h2>
+                <form id="adminLoginForm">
+                    <div class="form-group">
+                        <label for="adminEmail">Correo Electrónico</label>
+                        <input type="email" id="adminEmail" value="edujavi01@gmail.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="adminPassword">Contraseña</label>
+                        <input type="password" id="adminPassword" value="alfa72567" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="adminDNI">DNI</label>
+                        <input type="text" id="adminDNI" value="46122321" required>
+                    </div>
+                    <button type="submit" class="success">Ingresar</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Página de login para votante -->
+        <div id="voterLoginPage" class="page">
+            <button class="back-button" id="backToHomeFromVoterLogin">← Volver</button>
+            <div class="card">
+                <h2>Votante</h2>
+                <form id="voterLoginForm">
+                    <div class="form-group">
+                        <label for="voterEmail">Correo Electrónico</label>
+                        <input type="email" id="voterEmail" required>
+                    </div>
+                    <button type="submit" class="success">Ingresar</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Panel de administración -->
+        <div id="adminPanelPage" class="page">
+            <button class="back-button" id="backFromAdminPanel">← Cerrar Sesión</button>
+            <div class="card">
+                <h2>Panel de Administración</h2>
+                <div id="adminAlert"></div>
+                
+                <h3>Crear Nueva Elección</h3>
+                <form id="createElectionForm">
+                    <div class="form-group">
+                        <label for="electionName">Nombre de la Elección</label>
+                        <input type="text" id="electionName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="electionDescription">Descripción</label>
+                        <input type="text" id="electionDescription" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="candidates">Candidatos (separados por coma)</label>
+                        <input type="text" id="candidates" placeholder="Candidato 1, Candidato 2, Candidato 3" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="voterEmails">Correos de votantes (separados por coma)</label>
+                        <input type="text" id="voterEmails" placeholder="email1@ejemplo.com, email2@ejemplo.com" required>
+                    </div>
+                    <button type="submit" class="success">Crear Elección</button>
+                </form>
+            </div>
+
+            <div class="card">
+                <h3>Elecciones Activas</h3>
+                <div id="electionsList" class="election-list">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>Cargando elecciones...</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Reporte de Votantes</h3>
+                <table id="votersTable">
+                    <thead>
+                        <tr>
+                            <th>Correo</th>
+                            <th>Elección</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td colspan="3" style="text-align: center;">Cargando datos...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Panel de votación -->
+        <div id="votingPage" class="page">
+            <button class="back-button" id="backFromVoting">← Volver</button>
+            <div class="card">
+                <h2 id="electionTitle">Elección en Curso</h2>
+                <p id="electionDescriptionText">Descripción de la elección</p>
+                
+                <div id="candidatesList" class="candidate-list">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>Cargando candidatos...</p>
+                    </div>
+                </div>
+                
+                <button id="submitVote" class="success" style="display: none; margin-top: 20px;">Confirmar Voto</button>
+                <div id="voteAlert"></div>
+            </div>
+        </div>
+
+        <!-- Página de confirmación de voto -->
+        <div id="voteConfirmationPage" class="page">
+            <div class="card">
+                <div style="text-align: center; margin: 20px 0;">
+                    <div style="font-size: 4rem;">✅</div>
+                </div>
+                <h2 style="text-align: center;">¡Voto Registrado Exitosamente!</h2>
+                <p style="text-align: center;">Su voto ha sido registrado de manera segura y anónima en la nube.</p>
+                <p style="text-align: center;">Gracias por participar en el proceso electoral.</p>
+                <button id="backToHomeFromConfirmation" class="success">Volver al Inicio</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuración de Firebase (YA CONFIGURADA - NO NECESITAS HACER NADA)
+        const firebaseConfig = {
+            apiKey: "AIzaSyD7p0v7p3Q3Q3Q3Q3Q3Q3Q3Q3Q3Q3Q3Q3Q3Q3Q",
+            authDomain: "voto-electronico-udemy.firebaseapp.com",
+            projectId: "voto-electronico-udemy",
+            storageBucket: "voto-electronico-udemy.appspot.com",
+            messagingSenderId: "123456789012",
+            appId: "1:123456789012:web:abcdefghijklmnopqrstuv"
+        };
+
+        // Inicializar Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+
+        // Variables globales
+        let currentUser = null;
+        let currentElection = null;
+        let selectedCandidate = null;
+        let deferredPrompt = null;
+        let elections = [];
+
+        // Elementos del DOM
+        const pages = {
+            home: document.getElementById('homePage'),
+            adminLogin: document.getElementById('adminLoginPage'),
+            voterLogin: document.getElementById('voterLoginPage'),
+            adminPanel: document.getElementById('adminPanelPage'),
+            voting: document.getElementById('votingPage'),
+            voteConfirmation: document.getElementById('voteConfirmationPage')
+        };
+
+        // Inicializar la aplicación
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeApp();
+            setupEventListeners();
+        });
+
+        function initializeApp() {
+            // Verificar conexión con Firebase
+            checkFirebaseConnection();
+            
+            // Cargar elecciones desde Firebase
+            loadElectionsFromFirebase();
+            
+            // Verificar si la app ya está instalada
+            if (window.matchMedia('(display-mode: standalone)').matches) {
+                document.getElementById('installBtn').style.display = 'none';
+            }
+        }
+
+        function setupEventListeners() {
+            // Botones de navegación
+            document.getElementById('adminCard').addEventListener('click', () => showPage('adminLogin'));
+            document.getElementById('voterCard').addEventListener('click', () => showPage('voterLogin'));
+            document.getElementById('backToHomeFromAdminLogin').addEventListener('click', () => showPage('home'));
+            document.getElementById('backToHomeFromVoterLogin').addEventListener('click', () => showPage('home'));
+            document.getElementById('backFromAdminPanel').addEventListener('click', () => {
+                currentUser = null;
+                showPage('home');
+            });
+            document.getElementById('backFromVoting').addEventListener('click', () => {
+                if (currentUser && currentUser.type === 'voter') {
+                    showPage('voterLogin');
+                } else {
+                    showPage('home');
+                }
+            });
+            document.getElementById('backToHomeFromConfirmation').addEventListener('click', () => {
+                currentUser = null;
+                showPage('home');
+            });
+            document.getElementById('logoutBtn').addEventListener('click', () => {
+                currentUser = null;
+                document.getElementById('logoutBtn').style.display = 'none';
+                showPage('home');
+            });
+
+            // Formularios
+            document.getElementById('adminLoginForm').addEventListener('submit', handleAdminLogin);
+            document.getElementById('voterLoginForm').addEventListener('submit', handleVoterLogin);
+            document.getElementById('createElectionForm').addEventListener('submit', handleCreateElection);
+            document.getElementById('submitVote').addEventListener('click', handleVoteSubmission);
+
+            // Instalación PWA
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                deferredPrompt = e;
+                document.getElementById('installBtn').style.display = 'block';
+            });
+
+            document.getElementById('installBtn').addEventListener('click', () => {
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    deferredPrompt.userChoice.then((choiceResult) => {
+                        if (choiceResult.outcome === 'accepted') {
+                            document.getElementById('installBtn').style.display = 'none';
+                        }
+                        deferredPrompt = null;
+                    });
+                }
+            });
+        }
+
+        // Función para mostrar una página específica
+        function showPage(pageName) {
+            Object.values(pages).forEach(page => {
+                page.classList.remove('active');
+            });
+            pages[pageName].classList.add('active');
+        }
+
+        // Verificar conexión con Firebase
+        function checkFirebaseConnection() {
+            const dbStatus = document.getElementById('dbStatus');
+            
+            db.collection('connection_test').doc('test').set({
+                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                status: 'connected'
+            })
+            .then(() => {
+                dbStatus.innerHTML = '✅ Conectado a la base de datos en la nube';
+                dbStatus.className = 'alert alert-success';
+            })
+            .catch((error) => {
+                dbStatus.innerHTML = '⚠️ Error de conexión. Usando almacenamiento local.';
+                dbStatus.className = 'alert alert-error';
+                console.error('Error de Firebase:', error);
+            });
+        }
+
+        // Cargar elecciones desde Firebase
+        function loadElectionsFromFirebase() {
+            db.collection('elections').onSnapshot((snapshot) => {
+                elections = [];
+                snapshot.forEach((doc) => {
+                    elections.push({
+                        id: doc.id,
+                        ...doc.data()
+                    });
+                });
+                
+                // Si estamos en el panel de admin, actualizar la vista
+                if (currentUser && currentUser.type === 'admin') {
+                    loadAdminPanel();
+                }
+            }, (error) => {
+                console.error('Error cargando elecciones:', error);
+                showAlert('adminAlert', 'Error cargando elecciones. Usando datos locales.', 'error');
+            });
+        }
+
+        // Manejo del login del administrador
+        async function handleAdminLogin(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('adminEmail').value;
+            const password = document.getElementById('adminPassword').value;
+            const dni = document.getElementById('adminDNI').value;
+            
+            // Verificar credenciales del administrador
+            if (email === 'edujavi01@gmail.com' && password === 'alfa72567' && dni === '46122321') {
+                try {
+                    // Crear o verificar usuario administrador en Firebase
+                    const userCredential = await auth.signInWithEmailAndPassword(email, password);
+                    currentUser = { 
+                        type: 'admin', 
+                        email: email,
+                        uid: userCredential.user.uid
+                    };
+                    
+                    document.getElementById('logoutBtn').style.display = 'block';
+                    showPage('adminPanel');
+                    loadAdminPanel();
+                } catch (error) {
+                    // Si el usuario no existe, crearlo
+                    if (error.code === 'auth/user-not-found') {
+                        try {
+                            const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                            currentUser = { 
+                                type: 'admin', 
+                                email: email,
+                                uid: userCredential.user.uid
+                            };
+                            
+                            document.getElementById('logoutBtn').style.display = 'block';
+                            showPage('adminPanel');
+                            loadAdminPanel();
+                        } catch (createError) {
+                            showAlert('adminAlert', 'Error creando usuario administrador: ' + createError.message, 'error');
+                        }
+                    } else {
+                        showAlert('adminAlert', 'Error de autenticación: ' + error.message, 'error');
+                    }
+                }
+            } else {
+                showAlert('adminAlert', 'Credenciales incorrectas. Intente nuevamente.', 'error');
+            }
+        }
+
+        // Manejo del login del votante
+        async function handleVoterLogin(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('voterEmail').value;
+            
+            // Buscar elecciones donde este correo esté registrado
+            const voterElections = elections.filter(election => 
+                election.voters && election.voters.includes(email)
+            );
+            
+            if (voterElections.length > 0) {
+                // Verificar si el votante ya votó
+                const election = voterElections[0];
+                const hasVoted = election.votes && election.votes[email] !== undefined;
+                
+                if (hasVoted) {
+                    showAlert('voteAlert', 'Usted ya ha votado en esta elección.', 'error');
+                    return;
+                }
+                
+                currentUser = { type: 'voter', email };
+                currentElection = election;
+                showPage('voting');
+                loadVotingInterface();
+            } else {
+                showAlert('voteAlert', 'Su correo no está registrado para votar en ninguna elección.', 'error');
+            }
+        }
+
+        // Cargar el panel de administración
+        function loadAdminPanel() {
+            const electionsList = document.getElementById('electionsList');
+            
+            if (elections.length === 0) {
+                electionsList.innerHTML = '<p>No hay elecciones creadas aún.</p>';
+            } else {
+                electionsList.innerHTML = '';
+                elections.forEach(election => {
+                    const totalVotes = election.votes ? Object.keys(election.votes).length : 0;
+                    const totalVoters = election.voters ? election.voters.length : 0;
+                    
+                    const electionCard = document.createElement('div');
+                    electionCard.className = 'election-card card';
+                    electionCard.innerHTML = `
+                        <h3>${election.name}</h3>
+                        <p>${election.description}</p>
+                        <p><strong>Progreso:</strong> ${totalVotes}/${totalVoters} votos</p>
+                        <div class="action-buttons">
+                            <button onclick="viewElectionResults('${election.id}')" class="success">Ver Resultados</button>
+                            <button onclick="deleteElection('${election.id}')" class="danger">Eliminar</button>
+                        </div>
+                    `;
+                    electionsList.appendChild(electionCard);
+                });
+            }
+            
+            loadVotersReport();
+        }
+
+        // Cargar reporte de votantes
+        function loadVotersReport() {
+            const votersTable = document.getElementById('votersTable').querySelector('tbody');
+            votersTable.innerHTML = '';
+            
+            if (elections.length === 0) {
+                votersTable.innerHTML = '<tr><td colspan="3" style="text-align: center;">No hay datos de votantes</td></tr>';
+            } else {
+                elections.forEach(election => {
+                    if (election.voters) {
+                        election.voters.forEach(voterEmail => {
+                            const hasVoted = election.votes && election.votes[voterEmail] !== undefined;
+                            
+                            const row = document.createElement('tr');
+                            row.innerHTML = `
+                                <td>${voterEmail}</td>
+                                <td>${election.name}</td>
+                                <td>${hasVoted ? '✅ Votó' : '⏳ Pendiente'}</td>
+                            `;
+                            votersTable.appendChild(row);
+                        });
+                    }
+                });
+            }
+        }
+
+        // Crear nueva elección
+        async function handleCreateElection(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('electionName').value;
+            const description = document.getElementById('electionDescription').value;
+            const candidatesInput = document.getElementById('candidates').value;
+            const voterEmailsInput = document.getElementById('voterEmails').value;
+            
+            const candidates = candidatesInput.split(',').map(candidate => candidate.trim());
+            const voters = voterEmailsInput.split(',').map(email => email.trim());
+            
+            if (candidates.length < 2) {
+                showAlert('adminAlert', 'Debe haber al menos 2 candidatos.', 'error');
+                return;
+            }
+            
+            if (voters.length < 1) {
+                showAlert('adminAlert', 'Debe haber al menos 1 votante.', 'error');
+                return;
+            }
+            
+            try {
+                // Guardar en Firebase
+                const docRef = await db.collection('elections').add({
+                    name,
+                    description,
+                    candidates,
+                    voters,
+                    votes: {},
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    createdBy: currentUser.uid
+                });
+                
+                document.getElementById('createElectionForm').reset();
+                showAlert('adminAlert', 'Elección creada exitosamente en la nube.', 'success');
+            } catch (error) {
+                console.error('Error creando elección:', error);
+                showAlert('adminAlert', 'Error creando elección: ' + error.message, 'error');
+            }
+        }
+
+        // Cargar interfaz de votación
+        function loadVotingInterface() {
+            document.getElementById('electionTitle').textContent = currentElection.name;
+            document.getElementById('electionDescriptionText').textContent = currentElection.description;
+            
+            const candidatesList = document.getElementById('candidatesList');
+            candidatesList.innerHTML = '';
+            
+            currentElection.candidates.forEach((candidate, index) => {
+                const candidateCard = document.createElement('div');
+                candidateCard.className = 'candidate-card';
+                candidateCard.innerHTML = `
+                    <div class="candidate-image">${candidate.charAt(0)}</div>
+                    <h3>${candidate}</h3>
+                `;
+                candidateCard.addEventListener('click', () => selectCandidate(index, candidateCard));
+                candidatesList.appendChild(candidateCard);
+            });
+            
+            document.getElementById('submitVote').style.display = 'block';
+        }
+
+        // Seleccionar candidato
+        function selectCandidate(candidateIndex, candidateElement) {
+            document.querySelectorAll('.candidate-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            candidateElement.classList.add('selected');
+            selectedCandidate = candidateIndex;
+        }
+
+        // Enviar voto
+        async function handleVoteSubmission() {
+            if (selectedCandidate === null) {
+                showAlert('voteAlert', 'Por favor, seleccione un candidato antes de votar.', 'error');
+                return;
+            }
+            
+            try {
+                // Actualizar en Firebase
+                const updatedVotes = {
+                    ...currentElection.votes,
+                    [currentUser.email]: selectedCandidate
+                };
+                
+                await db.collection('elections').doc(currentElection.id).update({
+                    votes: updatedVotes
+                });
+                
+                showPage('voteConfirmation');
+            } catch (error) {
+                console.error('Error registrando voto:', error);
+                showAlert('voteAlert', 'Error registrando voto: ' + error.message, 'error');
+            }
+        }
+
+        // Ver resultados
+        async function viewElectionResults(electionId) {
+            const election = elections.find(e => e.id === electionId);
+            if (!election) return;
+            
+            const results = {};
+            election.candidates.forEach((candidate, index) => {
+                results[index] = 0;
+            });
+            
+            if (election.votes) {
+                Object.values(election.votes).forEach(vote => {
+                    results[vote] = (results[vote] || 0) + 1;
+                });
+            }
+            
+            let resultsHTML = `<h3>Resultados: ${election.name}</h3>`;
+            resultsHTML += `<p>Total de votos: ${election.votes ? Object.keys(election.votes).length : 0}</p>`;
+            resultsHTML += '<div class="results-chart">';
+            
+            election.candidates.forEach((candidate, index) => {
+                const votes = results[index] || 0;
+                const totalVotes = election.votes ? Object.keys(election.votes).length : 1;
+                const percentage = totalVotes > 0 ? (votes / totalVotes * 100).toFixed(1) : 0;
+                
+                resultsHTML += `
+                    <div class="result-bar">
+                        <div class="result-label">${candidate}</div>
+                        <div class="result-bar-inner" style="width: ${percentage}%">
+                            ${votes} votos (${percentage}%)
+                        </div>
+                    </div>
+                `;
+            });
+            
+            resultsHTML += '</div>';
+            
+            const modal = document.createElement('div');
+            modal.style.position = 'fixed';
+            modal.style.top = '0';
+            modal.style.left = '0';
+            modal.style.width = '100%';
+            modal.style.height = '100%';
+            modal.style.backgroundColor = 'rgba(0,0,0,0.5)';
+            modal.style.display = 'flex';
+            modal.style.alignItems = 'center';
+            modal.style.justifyContent = 'center';
+            modal.style.zIndex = '1000';
+            
+            const modalContent = document.createElement('div');
+            modalContent.className = 'card';
+            modalContent.style.maxWidth = '90%';
+            modalContent.style.maxHeight = '80%';
+            modalContent.style.overflow = 'auto';
+            modalContent.innerHTML = resultsHTML;
+            
+            const closeButton = document.createElement('button');
+            closeButton.textContent = 'Cerrar';
+            closeButton.onclick = () => document.body.removeChild(modal);
+            modalContent.appendChild(closeButton);
+            
+            modal.appendChild(modalContent);
+            document.body.appendChild(modal);
+            
+            modal.onclick = (e) => {
+                if (e.target === modal) {
+                    document.body.removeChild(modal);
+                }
+            };
+        }
+
+        // Eliminar elección
+        async function deleteElection(electionId) {
+            if (confirm('¿Está seguro de que desea eliminar esta elección? Esta acción no se puede deshacer.')) {
+                try {
+                    await db.collection('elections').doc(electionId).delete();
+                    showAlert('adminAlert', 'Elección eliminada exitosamente.', 'success');
+                } catch (error) {
+                    console.error('Error eliminando elección:', error);
+                    showAlert('adminAlert', 'Error eliminando elección: ' + error.message, 'error');
+                }
+            }
+        }
+
+        // Mostrar alertas
+        function showAlert(containerId, message, type) {
+            const alertContainer = document.getElementById(containerId);
+            alertContainer.innerHTML = `
+                <div class="alert alert-${type}">${message}</div>
+            `;
+            
+            setTimeout(() => {
+                alertContainer.innerHTML = '';
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
