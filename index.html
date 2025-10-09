@@ -9,14 +9,21 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗳️</text></svg>">
     <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗳️</text></svg>">
     <link rel="manifest" href="manifest.json">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
             --primary-color: #2c3e50;
             --secondary-color: #3498db;
             --success-color: #27ae60;
             --danger-color: #e74c3c;
+            --warning-color: #f39c12;
             --light-color: #ecf0f1;
             --dark-color: #34495e;
+            --gray-color: #95a5a6;
+            --border-radius: 12px;
+            --box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
         }
         
         * {
@@ -27,24 +34,23 @@
         }
         
         body {
-            background-color: #f5f7fa;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
             color: var(--dark-color);
             line-height: 1.6;
             min-height: 100vh;
-            padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
         }
         
         .container {
-            max-width: 100%;
+            max-width: 1200px;
             margin: 0 auto;
-            padding: 15px;
+            padding: 20px;
         }
         
         header {
-            background-color: var(--primary-color);
+            background: linear-gradient(135deg, var(--primary-color) 0%, #1a2530 100%);
             color: white;
-            padding: 1rem 0;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            padding: 1.2rem 0;
+            box-shadow: var(--box-shadow);
             position: sticky;
             top: 0;
             z-index: 100;
@@ -54,39 +60,52 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0 15px;
+            padding: 0 20px;
+            max-width: 1200px;
+            margin: 0 auto;
         }
         
         .logo {
-            font-size: 1.3rem;
+            font-size: 1.4rem;
             font-weight: bold;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
         }
         
         .logo-icon {
-            font-size: 1.5rem;
+            font-size: 1.8rem;
+        }
+        
+        .auth-buttons {
+            display: flex;
+            gap: 12px;
         }
         
         .auth-buttons button {
-            background-color: var(--secondary-color);
+            background: rgba(255,255,255,0.1);
             color: white;
-            border: none;
-            padding: 8px 12px;
-            border-radius: 4px;
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 10px 16px;
+            border-radius: var(--border-radius);
             cursor: pointer;
             font-size: 0.9rem;
+            transition: var(--transition);
+        }
+        
+        .auth-buttons button:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateY(-2px);
         }
         
         .install-btn {
-            background-color: var(--success-color) !important;
-            margin-right: 10px;
+            background: var(--success-color) !important;
+            border-color: var(--success-color) !important;
         }
         
         .page {
             display: none;
-            animation: fadeIn 0.5s;
+            animation: fadeIn 0.5s ease;
         }
         
         .active {
@@ -95,221 +114,287 @@
         
         .card {
             background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            padding: 20px;
-            margin-bottom: 20px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: 25px;
+            margin-bottom: 25px;
+            transition: var(--transition);
         }
         
-        h1, h2, h3 {
-            margin-bottom: 15px;
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 25px rgba(0,0,0,0.15);
+        }
+        
+        h1, h2, h3, h4 {
+            margin-bottom: 20px;
             color: var(--primary-color);
+            font-weight: 700;
+        }
+        
+        h1 {
+            font-size: 2.2rem;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-align: center;
         }
         
         .form-group {
-            margin-bottom: 15px;
+            margin-bottom: 20px;
         }
         
         label {
             display: block;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
             font-weight: 600;
+            color: var(--dark-color);
         }
         
-        input, select {
+        input, select, textarea {
             width: 100%;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
+            padding: 14px;
+            border: 2px solid #e1e8ed;
+            border-radius: var(--border-radius);
             font-size: 16px;
+            transition: var(--transition);
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
         }
         
         button {
-            background-color: var(--secondary-color);
+            background: linear-gradient(135deg, var(--secondary-color), #2980b9);
             color: white;
             border: none;
-            padding: 12px 15px;
-            border-radius: 4px;
+            padding: 16px 20px;
+            border-radius: var(--border-radius);
             cursor: pointer;
             font-size: 16px;
-            transition: background-color 0.3s;
+            font-weight: 600;
+            transition: var(--transition);
             width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
         }
         
         button:hover {
-            background-color: #2980b9;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
+        }
+        
+        button:active {
+            transform: translateY(-1px);
         }
         
         button.danger {
-            background-color: var(--danger-color);
-        }
-        
-        button.danger:hover {
-            background-color: #c0392b;
+            background: linear-gradient(135deg, var(--danger-color), #c0392b);
         }
         
         button.success {
-            background-color: var(--success-color);
+            background: linear-gradient(135deg, var(--success-color), #219653);
         }
         
-        button.success:hover {
-            background-color: #219653;
+        button.warning {
+            background: linear-gradient(135deg, var(--warning-color), #e67e22);
         }
         
         .user-type-selector {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            margin: 20px 0;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 25px 0;
         }
         
         .user-card {
             text-align: center;
             cursor: pointer;
-            transition: transform 0.3s;
-            padding: 20px;
+            transition: var(--transition);
+            padding: 30px;
+            border: 2px solid transparent;
         }
         
         .user-card:hover {
-            transform: translateY(-5px);
+            transform: translateY(-8px);
+            border-color: var(--secondary-color);
         }
         
         .user-card h3 {
-            margin-top: 10px;
+            margin-top: 15px;
+            font-size: 1.4rem;
         }
         
         .user-icon {
-            font-size: 3rem;
-            margin-bottom: 10px;
+            font-size: 4rem;
+            margin-bottom: 15px;
         }
         
         .election-list {
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 20px;
         }
         
         .election-card {
-            border-left: 4px solid var(--secondary-color);
+            border-left: 6px solid var(--secondary-color);
         }
         
         .candidate-list {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            margin-top: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 25px;
         }
         
         .candidate-card {
             text-align: center;
-            padding: 15px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
+            padding: 20px;
+            border: 2px solid #e1e8ed;
+            border-radius: var(--border-radius);
             cursor: pointer;
-            transition: all 0.3s;
+            transition: var(--transition);
         }
         
         .candidate-card:hover {
             border-color: var(--secondary-color);
-            box-shadow: 0 2px 8px rgba(52, 152, 219, 0.2);
+            box-shadow: 0 8px 25px rgba(52, 152, 219, 0.15);
+            transform: translateY(-5px);
         }
         
         .candidate-card.selected {
             border-color: var(--success-color);
-            background-color: rgba(39, 174, 96, 0.1);
+            background: linear-gradient(135deg, rgba(39, 174, 96, 0.05), rgba(52, 152, 219, 0.05));
+            transform: scale(1.02);
         }
         
         .candidate-image {
-            width: 80px;
-            height: 80px;
+            width: 120px;
+            height: 120px;
             border-radius: 50%;
             object-fit: cover;
-            margin: 0 auto 10px;
+            margin: 0 auto 15px;
             display: block;
-            background-color: #f0f0f0;
+            background: linear-gradient(135deg, #f0f0f0, #e0e0e0);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 2rem;
+            font-size: 2.5rem;
+            border: 4px solid #e1e8ed;
+            transition: var(--transition);
         }
         
-        .results-chart {
-            margin-top: 20px;
+        .candidate-card.selected .candidate-image {
+            border-color: var(--success-color);
         }
         
-        .result-bar {
-            display: flex;
-            align-items: center;
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin: 25px 0;
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 20px;
+            box-shadow: var(--box-shadow);
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: var(--border-radius);
+            padding: 25px;
+            text-align: center;
+            box-shadow: var(--box-shadow);
+            color: white;
+        }
+        
+        .stat-card:nth-child(2) {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        
+        .stat-card:nth-child(3) {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+        
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: bold;
             margin-bottom: 10px;
         }
         
-        .result-label {
-            width: 120px;
-            font-weight: 600;
-            font-size: 0.9rem;
-        }
-        
-        .result-bar-inner {
-            height: 25px;
-            background-color: var(--secondary-color);
-            display: flex;
-            align-items: center;
-            padding: 0 10px;
-            color: white;
-            border-radius: 4px;
-            min-width: 40px;
+        .stat-label {
+            font-size: 1rem;
+            opacity: 0.9;
         }
         
         .alert {
-            padding: 10px 15px;
-            border-radius: 4px;
-            margin-bottom: 15px;
+            padding: 15px 20px;
+            border-radius: var(--border-radius);
+            margin-bottom: 20px;
+            font-weight: 500;
         }
         
         .alert-success {
-            background-color: rgba(39, 174, 96, 0.2);
-            border-left: 4px solid var(--success-color);
+            background: linear-gradient(135deg, rgba(39, 174, 96, 0.1), rgba(39, 174, 96, 0.05));
+            border-left: 5px solid var(--success-color);
+            color: #155724;
         }
         
         .alert-error {
-            background-color: rgba(231, 76, 60, 0.2);
-            border-left: 4px solid var(--danger-color);
+            background: linear-gradient(135deg, rgba(231, 76, 60, 0.1), rgba(231, 76, 60, 0.05));
+            border-left: 5px solid var(--danger-color);
+            color: #721c24;
         }
         
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 20px;
-            font-size: 0.9rem;
+            margin-top: 25px;
+            font-size: 0.95rem;
+            background: white;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--box-shadow);
         }
         
         th, td {
-            padding: 10px 12px;
+            padding: 15px 20px;
             text-align: left;
-            border-bottom: 1px solid #ddd;
+            border-bottom: 1px solid #e1e8ed;
         }
         
         th {
-            background-color: #f2f2f2;
+            background: linear-gradient(135deg, var(--primary-color), #1a2530);
+            color: white;
             font-weight: 600;
         }
         
         tr:hover {
-            background-color: #f5f5f5;
+            background: rgba(52, 152, 219, 0.05);
         }
         
         .back-button {
-            background-color: #95a5a6;
-            margin-bottom: 15px;
+            background: linear-gradient(135deg, var(--gray-color), #7f8c8d);
+            margin-bottom: 20px;
             width: auto;
-            display: inline-block;
-            padding: 10px 15px;
+            display: inline-flex;
+            padding: 12px 20px;
         }
         
         .action-buttons {
             display: flex;
-            gap: 10px;
-            margin-top: 10px;
+            gap: 15px;
+            margin-top: 15px;
         }
         
         .action-buttons button {
@@ -317,40 +402,260 @@
             flex: 1;
         }
         
+        .file-upload-area {
+            border: 3px dashed #bdc3c7;
+            border-radius: var(--border-radius);
+            padding: 30px;
+            text-align: center;
+            margin-bottom: 20px;
+            transition: var(--transition);
+            cursor: pointer;
+        }
+        
+        .file-upload-area:hover {
+            border-color: var(--secondary-color);
+            background: rgba(52, 152, 219, 0.05);
+        }
+        
+        .file-upload-area.dragover {
+            border-color: var(--success-color);
+            background: rgba(39, 174, 96, 0.1);
+        }
+        
+        .file-input {
+            display: none;
+        }
+        
+        .voter-list, .candidate-list-admin {
+            max-height: 350px;
+            overflow-y: auto;
+            margin-top: 20px;
+            border: 2px solid #e1e8ed;
+            border-radius: var(--border-radius);
+            padding: 15px;
+        }
+        
+        .voter-item, .candidate-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #f1f1f1;
+        }
+        
+        .voter-item:last-child, .candidate-item:last-child {
+            border-bottom: none;
+        }
+        
+        .voter-info, .candidate-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .candidate-image-small {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+            background: linear-gradient(135deg, #f0f0f0, #e0e0e0);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            border: 2px solid #e1e8ed;
+        }
+        
+        .voter-email {
+            font-size: 1rem;
+            font-weight: 500;
+        }
+        
+        .remove-voter, .remove-candidate {
+            color: var(--danger-color);
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 50%;
+            transition: var(--transition);
+        }
+        
+        .remove-voter:hover, .remove-candidate:hover {
+            background: rgba(231, 76, 60, 0.1);
+        }
+        
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+        
+        .modal {
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+            width: 100%;
+            max-width: 900px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            padding: 25px 30px;
+            border-bottom: 2px solid #e1e8ed;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #f8f9fa;
+        }
+        
+        .modal-body {
+            padding: 30px;
+        }
+        
+        .modal-footer {
+            padding: 20px 30px;
+            border-top: 2px solid #e1e8ed;
+            display: flex;
+            gap: 15px;
+            justify-content: flex-end;
+            background: #f8f9fa;
+        }
+        
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 2rem;
+            cursor: pointer;
+            color: var(--gray-color);
+            width: auto;
+            padding: 0;
+        }
+        
+        .candidate-form {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .candidate-form input {
+            flex: 1;
+        }
+        
+        .candidate-form button {
+            width: auto;
+        }
+        
+        .image-preview {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin: 0 auto 15px;
+            display: block;
+            border: 3px solid #e1e8ed;
+        }
+        
+        .voter-form {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .voter-form input {
+            flex: 1;
+        }
+        
+        .voter-form button {
+            width: auto;
+        }
+        
+        .chart-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .chart-tab {
+            padding: 12px 24px;
+            background: #f8f9fa;
+            border: 2px solid #e1e8ed;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 600;
+        }
+        
+        .chart-tab.active {
+            background: var(--secondary-color);
+            color: white;
+            border-color: var(--secondary-color);
+        }
+        
+        .chart-tab:hover {
+            transform: translateY(-2px);
+        }
+        
+        .percentage-bar {
+            background: #e1e8ed;
+            border-radius: 10px;
+            height: 20px;
+            margin: 10px 0;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .percentage-fill {
+            height: 100%;
+            border-radius: 10px;
+            transition: width 1s ease;
+            position: relative;
+        }
+        
+        .percentage-text {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-weight: bold;
+            font-size: 0.9rem;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+        
         @keyframes fadeIn {
             from { opacity: 0; }
             to { opacity: 1; }
         }
         
-        /* Estilos específicos para móviles */
-        @media (min-width: 768px) {
+        @media (max-width: 768px) {
             .container {
-                max-width: 600px;
+                padding: 15px;
             }
             
             .user-type-selector {
-                flex-direction: row;
+                grid-template-columns: 1fr;
+            }
+            
+            .candidate-list {
+                grid-template-columns: 1fr;
             }
             
             .action-buttons {
-                flex-direction: row;
+                flex-direction: column;
             }
-        }
-        
-        /* Mejoras de usabilidad para móviles */
-        input, select, button {
-            -webkit-appearance: none;
-            -moz-appearance: none;
-            appearance: none;
-        }
-        
-        /* Efectos táctiles para móviles */
-        button:active {
-            transform: scale(0.98);
-        }
-        
-        .user-card:active, .candidate-card:active {
-            transform: scale(0.98);
+            
+            .candidate-form, .voter-form {
+                flex-direction: column;
+            }
         }
     </style>
 </head>
@@ -362,8 +667,12 @@
                 <span>Voto Electrónico</span>
             </div>
             <div class="auth-buttons">
-                <button id="installBtn" class="install-btn" style="display: none;">Instalar App</button>
-                <button id="logoutBtn" style="display: none;">Cerrar Sesión</button>
+                <button id="installBtn" class="install-btn" style="display: none;">
+                    <span>📲</span> Instalar App
+                </button>
+                <button id="logoutBtn" style="display: none;">
+                    <span>🚪</span> Cerrar Sesión
+                </button>
             </div>
         </div>
     </header>
@@ -372,112 +681,188 @@
         <!-- Página de inicio -->
         <div id="homePage" class="page active">
             <div class="card">
-                <h1>Voto Electrónico Seguro</h1>
-                <p>Seleccione su tipo de usuario para continuar:</p>
+                <h1>Sistema de Voto Electrónico Seguro</h1>
+                <p style="text-align: center; font-size: 1.1rem; color: var(--dark-color); margin-bottom: 30px;">
+                    Plataforma moderna y segura para procesos electorales digitales
+                </p>
                 
                 <div class="user-type-selector">
                     <div class="user-card card" id="adminCard">
                         <div class="user-icon">👨‍💼</div>
                         <h3>Administrador</h3>
-                        <p>Acceso con correo, contraseña y DNI</p>
+                        <p>Gestión completa del sistema electoral</p>
                     </div>
                     <div class="user-card card" id="voterCard">
                         <div class="user-icon">👤</div>
                         <h3>Votante</h3>
-                        <p>Acceso solo con correo electrónico</p>
+                        <p>Participa en las elecciones activas</p>
                     </div>
                 </div>
             </div>
             
             <div class="card">
-                <h3>Instalar la aplicación</h3>
+                <h3>📱 Aplicación Móvil</h3>
                 <p>Para una mejor experiencia, instale esta aplicación en su dispositivo.</p>
-                <button id="installInfoBtn">Cómo instalar</button>
+                <button id="installInfoBtn">
+                    <span>ℹ️</span> Cómo instalar
+                </button>
             </div>
         </div>
 
         <!-- Página de login para administrador -->
         <div id="adminLoginPage" class="page">
-            <button class="back-button" id="backToHomeFromAdminLogin">← Volver</button>
+            <button class="back-button" id="backToHomeFromAdminLogin">
+                <span>←</span> Volver al Inicio
+            </button>
             <div class="card">
-                <h2>Administrador</h2>
+                <h2>🔐 Acceso Administrador</h2>
                 <form id="adminLoginForm">
                     <div class="form-group">
-                        <label for="adminEmail">Correo Electrónico</label>
+                        <label for="adminEmail">📧 Correo Electrónico</label>
                         <input type="email" id="adminEmail" value="edujavi01@gmail.com" required>
                     </div>
                     <div class="form-group">
-                        <label for="adminPassword">Contraseña</label>
+                        <label for="adminPassword">🔒 Contraseña</label>
                         <input type="password" id="adminPassword" value="alfa72567" required>
                     </div>
                     <div class="form-group">
-                        <label for="adminDNI">DNI</label>
+                        <label for="adminDNI">🆔 DNI</label>
                         <input type="text" id="adminDNI" value="46122321" required>
                     </div>
-                    <button type="submit" class="success">Ingresar</button>
+                    <button type="submit" class="success">
+                        <span>🚀</span> Ingresar al Panel
+                    </button>
                 </form>
             </div>
         </div>
 
         <!-- Página de login para votante -->
         <div id="voterLoginPage" class="page">
-            <button class="back-button" id="backToHomeFromVoterLogin">← Volver</button>
+            <button class="back-button" id="backToHomeFromVoterLogin">
+                <span>←</span> Volver al Inicio
+            </button>
             <div class="card">
-                <h2>Votante</h2>
+                <h2>👤 Acceso Votante</h2>
                 <form id="voterLoginForm">
                     <div class="form-group">
-                        <label for="voterEmail">Correo Electrónico</label>
-                        <input type="email" id="voterEmail" required>
+                        <label for="voterEmail">📧 Correo Electrónico</label>
+                        <input type="email" id="voterEmail" placeholder="tu@email.com" required>
                     </div>
-                    <button type="submit" class="success">Ingresar</button>
+                    <button type="submit" class="success">
+                        <span>🗳️</span> Ingresar a Votar
+                    </button>
                 </form>
             </div>
         </div>
 
         <!-- Panel de administración -->
         <div id="adminPanelPage" class="page">
-            <button class="back-button" id="backFromAdminPanel">← Cerrar Sesión</button>
+            <button class="back-button" id="backFromAdminPanel">
+                <span>←</span> Cerrar Sesión
+            </button>
             <div class="card">
-                <h2>Panel de Administración</h2>
+                <h2>🎛️ Panel de Administración</h2>
                 <div id="adminAlert"></div>
                 
-                <h3>Crear Nueva Elección</h3>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalElections">0</div>
+                        <div class="stat-label">Elecciones Activas</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalVoters">0</div>
+                        <div class="stat-label">Votantes Registrados</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalVotes">0</div>
+                        <div class="stat-label">Votos Emitidos</div>
+                    </div>
+                </div>
+                
+                <h3>🆕 Crear Nueva Elección</h3>
                 <form id="createElectionForm">
                     <div class="form-group">
-                        <label for="electionName">Nombre de la Elección</label>
-                        <input type="text" id="electionName" required>
+                        <label for="electionName">📝 Nombre de la Elección</label>
+                        <input type="text" id="electionName" placeholder="Ej: Elección de Representante 2024" required>
                     </div>
                     <div class="form-group">
-                        <label for="electionDescription">Descripción</label>
-                        <input type="text" id="electionDescription" required>
+                        <label for="electionDescription">📄 Descripción</label>
+                        <textarea id="electionDescription" rows="3" placeholder="Descripción detallada de la elección..." required></textarea>
                     </div>
+                    
+                    <h4>👥 Gestión de Candidatos</h4>
                     <div class="form-group">
-                        <label for="candidates">Candidatos (separados por coma)</label>
-                        <input type="text" id="candidates" placeholder="Candidato 1, Candidato 2, Candidato 3" required>
+                        <label>Agregar candidatos</label>
+                        <div class="candidate-form">
+                            <input type="text" id="candidateName" placeholder="Nombre del candidato">
+                            <input type="file" id="candidatePhoto" accept="image/*" class="file-input" style="display: none;">
+                            <button type="button" id="candidatePhotoBtn" class="warning" style="width: auto;">
+                                <span>🖼️</span> Foto
+                            </button>
+                            <button type="button" id="addCandidateBtn" class="success" style="width: auto;">
+                                <span>➕</span> Agregar
+                            </button>
+                        </div>
+                        <div id="candidatePhotoPreview" style="text-align: center; margin-top: 15px;"></div>
                     </div>
+                    
+                    <div class="candidate-list-admin" id="candidateListAdmin">
+                        <!-- Los candidatos se mostrarán aquí -->
+                    </div>
+                    
+                    <h4>👥 Gestión de Votantes</h4>
                     <div class="form-group">
-                        <label for="voterEmails">Correos de votantes (separados por coma)</label>
-                        <input type="text" id="voterEmails" placeholder="email1@ejemplo.com, email2@ejemplo.com" required>
+                        <label>Agregar votantes individualmente</label>
+                        <div class="voter-form">
+                            <input type="email" id="voterEmailInput" placeholder="correo@ejemplo.com" style="flex: 1;">
+                            <button type="button" id="addVoterBtn" class="success" style="width: auto;">
+                                <span>➕</span> Agregar
+                            </button>
+                        </div>
                     </div>
-                    <button type="submit" class="success">Crear Elección</button>
+                    
+                    <div class="form-group">
+                        <label>📊 O importar desde Excel</label>
+                        <div class="file-upload-area" id="fileUploadArea">
+                            <p style="font-size: 1.2rem; margin-bottom: 10px;">📁 Arrastra un archivo Excel aquí</p>
+                            <p class="voter-email">Formato: Correo Electrónico</p>
+                            <input type="file" id="excelFile" class="file-input" accept=".xlsx, .xls">
+                        </div>
+                        <div class="action-buttons">
+                            <button type="button" id="downloadTemplateBtn" class="warning">
+                                <span>📥</span> Descargar Plantilla
+                            </button>
+                            <button type="button" id="exportVotersBtn" class="success" style="display: none;">
+                                <span>📤</span> Exportar Votantes
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="voter-list" id="voterList">
+                        <!-- Los votantes se mostrarán aquí -->
+                    </div>
+                    
+                    <button type="submit" class="success">
+                        <span>✅</span> Crear Elección
+                    </button>
                 </form>
             </div>
 
             <div class="card">
-                <h3>Elecciones Activas</h3>
+                <h3>📊 Elecciones Activas</h3>
                 <div id="electionsList" class="election-list">
                     <!-- Las elecciones se cargarán aquí dinámicamente -->
                 </div>
             </div>
 
             <div class="card">
-                <h3>Reporte de Votantes</h3>
+                <h3>📈 Reporte de Votantes</h3>
                 <table id="votersTable">
                     <thead>
                         <tr>
-                            <th>Correo</th>
-                            <th>Elección</th>
-                            <th>Estado</th>
+                            <th>📧 Correo Electrónico</th>
+                            <th>🗳️ Elección</th>
+                            <th>📊 Estado</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -489,51 +874,97 @@
 
         <!-- Panel de votación -->
         <div id="votingPage" class="page">
-            <button class="back-button" id="backFromVoting">← Volver</button>
+            <button class="back-button" id="backFromVoting">
+                <span>←</span> Volver
+            </button>
             <div class="card">
-                <h2 id="electionTitle">Elección en Curso</h2>
-                <p id="electionDescriptionText">Descripción de la elección</p>
+                <h2 id="electionTitle">🗳️ Elección en Curso</h2>
+                <p id="electionDescriptionText" style="font-size: 1.1rem; color: var(--dark-color); margin-bottom: 25px;">
+                    Descripción de la elección
+                </p>
                 
                 <div id="candidatesList" class="candidate-list">
                     <!-- Los candidatos se cargarán aquí dinámicamente -->
                 </div>
                 
-                <button id="submitVote" class="success" style="display: none; margin-top: 20px;">Confirmar Voto</button>
+                <button id="submitVote" class="success" style="display: none; margin-top: 30px;">
+                    <span>✅</span> Confirmar Mi Voto
+                </button>
                 <div id="voteAlert"></div>
             </div>
         </div>
 
         <!-- Página de confirmación de voto -->
         <div id="voteConfirmationPage" class="page">
-            <div class="card">
-                <div style="text-align: center; margin: 20px 0;">
-                    <div style="font-size: 4rem;">✅</div>
-                </div>
-                <h2 style="text-align: center;">¡Voto Registrado Exitosamente!</h2>
-                <p style="text-align: center;">Su voto ha sido registrado de manera segura y anónima.</p>
-                <p style="text-align: center;">Gracias por participar en el proceso electoral.</p>
-                <button id="backToHomeFromConfirmation" class="success">Volver al Inicio</button>
+            <div class="card" style="text-align: center;">
+                <div style="font-size: 6rem; margin: 20px 0;">✅</div>
+                <h2 style="color: var(--success-color);">¡Voto Registrado Exitosamente!</h2>
+                <p style="font-size: 1.2rem; margin: 20px 0; color: var(--dark-color);">
+                    Su voto ha sido registrado de manera segura y anónima en el sistema.
+                </p>
+                <p style="color: var(--gray-color); margin-bottom: 30px;">
+                    Gracias por participar en el proceso electoral democrático.
+                </p>
+                <button id="backToHomeFromConfirmation" class="success" style="max-width: 300px; margin: 0 auto;">
+                    <span>🏠</span> Volver al Inicio
+                </button>
             </div>
         </div>
 
         <!-- Página de información de instalación -->
         <div id="installInfoPage" class="page">
-            <button class="back-button" id="backFromInstallInfo">← Volver</button>
+            <button class="back-button" id="backFromInstallInfo">
+                <span>←</span> Volver al Inicio
+            </button>
             <div class="card">
-                <h2>Instalar la Aplicación</h2>
-                <div class="install-step">
-                    <h3>📱 En Android:</h3>
+                <h2>📱 Instalar la Aplicación</h2>
+                <div class="install-step" style="margin-bottom: 25px;">
+                    <h3>🤖 En Android:</h3>
                     <p>1. Abra el menú de opciones (tres puntos) en Chrome</p>
                     <p>2. Seleccione "Agregar a la pantalla de inicio"</p>
                     <p>3. Confirme la instalación</p>
                 </div>
-                <div class="install-step">
-                    <h3>📱 En iPhone/iPad:</h3>
+                <div class="install-step" style="margin-bottom: 25px;">
+                    <h3>🍎 En iPhone/iPad:</h3>
                     <p>1. Pulse el ícono de compartir (cuadrado con flecha)</p>
                     <p>2. Desplácese y seleccione "Agregar a pantalla de inicio"</p>
                     <p>3. Confirme la instalación</p>
                 </div>
-                <button id="tryInstallBtn">Intentar Instalación Automática</button>
+                <button id="tryInstallBtn">
+                    <span>🔧</span> Intentar Instalación Automática
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para resultados -->
+    <div id="resultsModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="resultsModalTitle">📊 Resultados de Elección</h3>
+                <button class="close-modal" id="closeResultsModal">×</button>
+            </div>
+            <div class="modal-body" id="resultsModalBody">
+                <div class="chart-tabs" id="chartTabs">
+                    <div class="chart-tab active" data-chart="bar">📊 Gráfico de Barras</div>
+                    <div class="chart-tab" data-chart="pie">🥧 Gráfico Circular</div>
+                    <div class="chart-tab" data-chart="doughnut">🍩 Gráfico de Dona</div>
+                    <div class="chart-tab" data-chart="polarArea">🎯 Gráfico Polar</div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="resultsChart"></canvas>
+                </div>
+                <div id="resultsDetails">
+                    <!-- Los detalles de resultados se cargarán aquí -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="exportResultsBtn" class="success">
+                    <span>📥</span> Exportar Resultados
+                </button>
+                <button id="closeResultsBtn" class="back-button">
+                    <span>❌</span> Cerrar
+                </button>
             </div>
         </div>
     </div>
@@ -543,19 +974,59 @@
         let elections = [
             {
                 id: 1,
-                name: "Elección de Representante Estudiantil",
-                description: "Elección para elegir al representante estudiantil del año 2023",
-                candidates: ["María González", "Carlos Rodríguez", "Ana Martínez"],
-                votes: {},
-                voters: ["votante1@ejemplo.com", "votante2@ejemplo.com", "votante3@ejemplo.com"]
+                name: "Elección de Representante Estudiantil 2024",
+                description: "Elección para elegir al representante estudiantil del año académico 2024",
+                candidates: [
+                    { name: "María González", photo: null },
+                    { name: "Carlos Rodríguez", photo: null },
+                    { name: "Ana Martínez", photo: null },
+                    { name: "David López", photo: null }
+                ],
+                votes: {
+                    "votante1@ejemplo.com": 0,
+                    "votante2@ejemplo.com": 1,
+                    "votante3@ejemplo.com": 2,
+                    "votante4@ejemplo.com": 0,
+                    "votante5@ejemplo.com": 1,
+                    "votante6@ejemplo.com": 3,
+                    "votante7@ejemplo.com": 2,
+                    "votante8@ejemplo.com": 0,
+                    "votante9@ejemplo.com": 1,
+                    "votante10@ejemplo.com": 3
+                },
+                voters: [
+                    "votante1@ejemplo.com", "votante2@ejemplo.com", "votante3@ejemplo.com",
+                    "votante4@ejemplo.com", "votante5@ejemplo.com", "votante6@ejemplo.com",
+                    "votante7@ejemplo.com", "votante8@ejemplo.com", "votante9@ejemplo.com",
+                    "votante10@ejemplo.com"
+                ]
             },
             {
                 id: 2,
                 name: "Elección de Comité de Empresa",
-                description: "Elección para los miembros del comité de empresa",
-                candidates: ["Juan Pérez", "Laura Sánchez", "Pedro López", "Sofía García"],
-                votes: {},
-                voters: ["empleado1@empresa.com", "empleado2@empresa.com", "empleado3@empresa.com"]
+                description: "Elección para los miembros del comité de empresa 2024",
+                candidates: [
+                    { name: "Juan Pérez", photo: null },
+                    { name: "Laura Sánchez", photo: null },
+                    { name: "Pedro López", photo: null },
+                    { name: "Sofía García", photo: null },
+                    { name: "Miguel Ángel Ruiz", photo: null }
+                ],
+                votes: {
+                    "empleado1@empresa.com": 0,
+                    "empleado2@empresa.com": 1,
+                    "empleado3@empresa.com": 2,
+                    "empleado4@empresa.com": 3,
+                    "empleado5@empresa.com": 4,
+                    "empleado6@empresa.com": 0,
+                    "empleado7@empresa.com": 1,
+                    "empleado8@empresa.com": 2
+                },
+                voters: [
+                    "empleado1@empresa.com", "empleado2@empresa.com", "empleado3@empresa.com",
+                    "empleado4@empresa.com", "empleado5@empresa.com", "empleado6@empresa.com",
+                    "empleado7@empresa.com", "empleado8@empresa.com"
+                ]
             }
         ];
 
@@ -563,6 +1034,10 @@
         let currentElection = null;
         let selectedCandidate = null;
         let deferredPrompt = null;
+        let currentVoters = [];
+        let currentCandidates = [];
+        let currentCandidatePhoto = null;
+        let resultsChart = null;
 
         // Elementos del DOM
         const pages = {
@@ -575,62 +1050,132 @@
             installInfo: document.getElementById('installInfoPage')
         };
 
-        // Botones de navegación
-        document.getElementById('adminCard').addEventListener('click', () => showPage('adminLogin'));
-        document.getElementById('voterCard').addEventListener('click', () => showPage('voterLogin'));
-        document.getElementById('backToHomeFromAdminLogin').addEventListener('click', () => showPage('home'));
-        document.getElementById('backToHomeFromVoterLogin').addEventListener('click', () => showPage('home'));
-        document.getElementById('backFromAdminPanel').addEventListener('click', () => {
-            currentUser = null;
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', () => {
             showPage('home');
-        });
-        document.getElementById('backFromVoting').addEventListener('click', () => {
-            if (currentUser && currentUser.type === 'voter') {
-                showPage('voterLogin');
-            } else {
-                showPage('home');
-            }
-        });
-        document.getElementById('backToHomeFromConfirmation').addEventListener('click', () => {
-            currentUser = null;
-            showPage('home');
-        });
-        document.getElementById('logoutBtn').addEventListener('click', () => {
-            currentUser = null;
-            document.getElementById('logoutBtn').style.display = 'none';
-            showPage('home');
-        });
-        document.getElementById('installInfoBtn').addEventListener('click', () => showPage('installInfo'));
-        document.getElementById('backFromInstallInfo').addEventListener('click', () => showPage('home'));
-        document.getElementById('tryInstallBtn').addEventListener('click', () => {
-            if (deferredPrompt) {
-                deferredPrompt.prompt();
-                deferredPrompt.userChoice.then((choiceResult) => {
-                    if (choiceResult.outcome === 'accepted') {
-                        console.log('Usuario aceptó la instalación');
-                    }
-                    deferredPrompt = null;
-                });
-            } else {
-                showAlert('adminAlert', 'La instalación automática no está disponible. Siga las instrucciones manuales.', 'error');
-            }
+            loadData();
+            setupEventListeners();
+            updateStats();
         });
 
-        // Formularios
-        document.getElementById('adminLoginForm').addEventListener('submit', handleAdminLogin);
-        document.getElementById('voterLoginForm').addEventListener('submit', handleVoterLogin);
-        document.getElementById('createElectionForm').addEventListener('submit', handleCreateElection);
-        document.getElementById('submitVote').addEventListener('click', handleVoteSubmission);
+        // Configurar event listeners
+        function setupEventListeners() {
+            // Botones de navegación
+            document.getElementById('adminCard').addEventListener('click', () => showPage('adminLogin'));
+            document.getElementById('voterCard').addEventListener('click', () => showPage('voterLogin'));
+            document.getElementById('backToHomeFromAdminLogin').addEventListener('click', () => showPage('home'));
+            document.getElementById('backToHomeFromVoterLogin').addEventListener('click', () => showPage('home'));
+            document.getElementById('backFromAdminPanel').addEventListener('click', () => {
+                currentUser = null;
+                showPage('home');
+            });
+            document.getElementById('backFromVoting').addEventListener('click', () => {
+                if (currentUser && currentUser.type === 'voter') {
+                    showPage('voterLogin');
+                } else {
+                    showPage('home');
+                }
+            });
+            document.getElementById('backToHomeFromConfirmation').addEventListener('click', () => {
+                currentUser = null;
+                showPage('home');
+            });
+            document.getElementById('logoutBtn').addEventListener('click', () => {
+                currentUser = null;
+                document.getElementById('logoutBtn').style.display = 'none';
+                showPage('home');
+            });
+            document.getElementById('installInfoBtn').addEventListener('click', () => showPage('installInfo'));
+            document.getElementById('backFromInstallInfo').addEventListener('click', () => showPage('home'));
+            document.getElementById('tryInstallBtn').addEventListener('click', () => {
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    deferredPrompt.userChoice.then((choiceResult) => {
+                        if (choiceResult.outcome === 'accepted') {
+                            console.log('Usuario aceptó la instalación');
+                        }
+                        deferredPrompt = null;
+                    });
+                } else {
+                    showAlert('adminAlert', 'La instalación automática no está disponible. Siga las instrucciones manuales.', 'error');
+                }
+            });
+
+            // Formularios
+            document.getElementById('adminLoginForm').addEventListener('submit', handleAdminLogin);
+            document.getElementById('voterLoginForm').addEventListener('submit', handleVoterLogin);
+            document.getElementById('createElectionForm').addEventListener('submit', handleCreateElection);
+            document.getElementById('submitVote').addEventListener('click', handleVoteSubmission);
+            
+            // Gestión de candidatos
+            document.getElementById('addCandidateBtn').addEventListener('click', addCandidate);
+            document.getElementById('candidatePhotoBtn').addEventListener('click', () => {
+                document.getElementById('candidatePhoto').click();
+            });
+            document.getElementById('candidatePhoto').addEventListener('change', handleCandidatePhotoUpload);
+            
+            // Gestión de votantes
+            document.getElementById('addVoterBtn').addEventListener('click', addVoterManually);
+            document.getElementById('downloadTemplateBtn').addEventListener('click', downloadTemplate);
+            document.getElementById('exportVotersBtn').addEventListener('click', exportVoters);
+            
+            // Gestión de archivos
+            document.getElementById('fileUploadArea').addEventListener('click', () => {
+                document.getElementById('excelFile').click();
+            });
+            document.getElementById('excelFile').addEventListener('change', handleExcelUpload);
+            
+            // Modal de resultados
+            document.getElementById('closeResultsModal').addEventListener('click', closeResultsModal);
+            document.getElementById('closeResultsBtn').addEventListener('click', closeResultsModal);
+            document.getElementById('exportResultsBtn').addEventListener('click', exportResults);
+            
+            // Tabs de gráficos
+            document.querySelectorAll('.chart-tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    document.querySelectorAll('.chart-tab').forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    const chartType = this.getAttribute('data-chart');
+                    updateChart(chartType);
+                });
+            });
+            
+            // Drag and drop para archivos
+            setupDragAndDrop();
+        }
+
+        // Configurar drag and drop para archivos
+        function setupDragAndDrop() {
+            const fileUploadArea = document.getElementById('fileUploadArea');
+            
+            fileUploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                fileUploadArea.classList.add('dragover');
+            });
+            
+            fileUploadArea.addEventListener('dragleave', () => {
+                fileUploadArea.classList.remove('dragover');
+            });
+            
+            fileUploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                fileUploadArea.classList.remove('dragover');
+                
+                if (e.dataTransfer.files.length) {
+                    document.getElementById('excelFile').files = e.dataTransfer.files;
+                    handleExcelUpload();
+                }
+            });
+        }
 
         // Función para mostrar una página específica
         function showPage(pageName) {
-            // Ocultar todas las páginas
             Object.values(pages).forEach(page => {
                 page.classList.remove('active');
             });
-            
-            // Mostrar la página solicitada
             pages[pageName].classList.add('active');
+            document.getElementById('adminAlert').innerHTML = '';
+            document.getElementById('voteAlert').innerHTML = '';
         }
 
         // Manejo del login del administrador
@@ -641,7 +1186,6 @@
             const password = document.getElementById('adminPassword').value;
             const dni = document.getElementById('adminDNI').value;
             
-            // Validación con las credenciales proporcionadas
             if (email === 'edujavi01@gmail.com' && password === 'alfa72567' && dni === '46122321') {
                 currentUser = { type: 'admin', email };
                 document.getElementById('logoutBtn').style.display = 'block';
@@ -657,15 +1201,12 @@
             e.preventDefault();
             
             const email = document.getElementById('voterEmail').value;
-            
-            // Verificar si el correo está registrado en alguna elección
             const voterElections = elections.filter(election => 
                 election.voters.includes(email)
             );
             
             if (voterElections.length > 0) {
                 currentUser = { type: 'voter', email };
-                // Mostrar la primera elección disponible para este votante
                 currentElection = voterElections[0];
                 showPage('voting');
                 loadVotingInterface();
@@ -676,34 +1217,50 @@
 
         // Cargar el panel de administración
         function loadAdminPanel() {
-            // Cargar lista de elecciones
             const electionsList = document.getElementById('electionsList');
             electionsList.innerHTML = '';
             
             if (elections.length === 0) {
-                electionsList.innerHTML = '<p>No hay elecciones creadas aún.</p>';
+                electionsList.innerHTML = '<p style="text-align: center; color: var(--gray-color); padding: 30px;">No hay elecciones creadas aún.</p>';
             } else {
                 elections.forEach(election => {
                     const totalVotes = Object.keys(election.votes).length;
                     const totalVoters = election.voters.length;
+                    const progressPercentage = totalVoters > 0 ? (totalVotes / totalVoters * 100) : 0;
                     
                     const electionCard = document.createElement('div');
                     electionCard.className = 'election-card card';
                     electionCard.innerHTML = `
                         <h3>${election.name}</h3>
                         <p>${election.description}</p>
-                        <p><strong>Progreso:</strong> ${totalVotes}/${totalVoters} votos</p>
+                        <div style="margin: 15px 0;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <span><strong>Progreso:</strong> ${totalVotes}/${totalVoters} votos</span>
+                                <span><strong>${progressPercentage.toFixed(1)}%</strong></span>
+                            </div>
+                            <div style="background: #e1e8ed; border-radius: 10px; height: 10px; overflow: hidden;">
+                                <div style="background: linear-gradient(90deg, var(--success-color), var(--secondary-color)); height: 100%; width: ${progressPercentage}%;"></div>
+                            </div>
+                        </div>
                         <div class="action-buttons">
-                            <button onclick="viewElectionResults(${election.id})" class="success">Ver Resultados</button>
-                            <button onclick="deleteElection(${election.id})" class="danger">Eliminar</button>
+                            <button onclick="viewElectionResults(${election.id})" class="success">
+                                <span>📊</span> Ver Resultados
+                            </button>
+                            <button onclick="deleteElection(${election.id})" class="danger">
+                                <span>🗑️</span> Eliminar
+                            </button>
                         </div>
                     `;
                     electionsList.appendChild(electionCard);
                 });
             }
             
-            // Cargar reporte de votantes
             loadVotersReport();
+            updateStats();
+            currentVoters = [];
+            currentCandidates = [];
+            renderVoterList();
+            renderCandidateList();
         }
 
         // Cargar reporte de votantes
@@ -712,12 +1269,11 @@
             votersTable.innerHTML = '';
             
             if (elections.length === 0) {
-                votersTable.innerHTML = '<tr><td colspan="3" style="text-align: center;">No hay datos de votantes</td></tr>';
+                votersTable.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 30px; color: var(--gray-color);">No hay datos de votantes</td></tr>';
             } else {
                 elections.forEach(election => {
                     election.voters.forEach(voterEmail => {
                         const hasVoted = election.votes && election.votes[voterEmail] !== undefined;
-                        
                         const row = document.createElement('tr');
                         row.innerHTML = `
                             <td>${voterEmail}</td>
@@ -730,52 +1286,186 @@
             }
         }
 
+        // Actualizar estadísticas
+        function updateStats() {
+            const totalElections = elections.length;
+            const totalVoters = elections.reduce((sum, election) => sum + election.voters.length, 0);
+            const totalVotes = elections.reduce((sum, election) => sum + Object.keys(election.votes).length, 0);
+            
+            document.getElementById('totalElections').textContent = totalElections;
+            document.getElementById('totalVoters').textContent = totalVoters;
+            document.getElementById('totalVotes').textContent = totalVotes;
+        }
+
+        // Agregar candidato
+        function addCandidate() {
+            const name = document.getElementById('candidateName').value.trim();
+            
+            if (!name) {
+                showAlert('adminAlert', 'Por favor, ingrese el nombre del candidato.', 'error');
+                return;
+            }
+            
+            const candidate = { name, photo: currentCandidatePhoto };
+            currentCandidates.push(candidate);
+            renderCandidateList();
+            
+            document.getElementById('candidateName').value = '';
+            document.getElementById('candidatePhotoPreview').innerHTML = '';
+            currentCandidatePhoto = null;
+            
+            showAlert('adminAlert', 'Candidato agregado correctamente.', 'success');
+        }
+
+        // Manejar subida de foto de candidato
+        function handleCandidatePhotoUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            if (!file.type.match('image.*')) {
+                showAlert('adminAlert', 'Por favor, seleccione un archivo de imagen válido.', 'error');
+                return;
+            }
+            
+            if (file.size > 2 * 1024 * 1024) {
+                showAlert('adminAlert', 'La imagen no debe superar los 2MB.', 'error');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                currentCandidatePhoto = e.target.result;
+                const preview = document.getElementById('candidatePhotoPreview');
+                preview.innerHTML = `
+                    <img src="${currentCandidatePhoto}" class="image-preview" alt="Vista previa">
+                    <p style="color: var(--success-color); font-weight: 600;">Vista previa de la foto</p>
+                `;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Renderizar lista de candidatos
+        function renderCandidateList() {
+            const candidateList = document.getElementById('candidateListAdmin');
+            candidateList.innerHTML = '';
+            
+            if (currentCandidates.length === 0) {
+                candidateList.innerHTML = '<p style="text-align: center; color: var(--gray-color); padding: 20px;">No hay candidatos agregados</p>';
+            } else {
+                currentCandidates.forEach((candidate, index) => {
+                    const candidateItem = document.createElement('div');
+                    candidateItem.className = 'candidate-item';
+                    candidateItem.innerHTML = `
+                        <div class="candidate-info">
+                            ${candidate.photo ? 
+                                `<img src="${candidate.photo}" class="candidate-image-small" alt="${candidate.name}">` :
+                                `<div class="candidate-image-small">${candidate.name.charAt(0)}</div>`
+                            }
+                            <strong>${candidate.name}</strong>
+                        </div>
+                        <span class="remove-candidate" onclick="removeCandidate(${index})">❌</span>
+                    `;
+                    candidateList.appendChild(candidateItem);
+                });
+            }
+        }
+
+        // Eliminar candidato
+        function removeCandidate(index) {
+            currentCandidates.splice(index, 1);
+            renderCandidateList();
+        }
+
+        // Agregar votante manualmente
+        function addVoterManually() {
+            const email = document.getElementById('voterEmailInput').value.trim();
+            
+            if (!email) {
+                showAlert('adminAlert', 'Por favor, ingrese un correo electrónico.', 'error');
+                return;
+            }
+            
+            if (!isValidEmail(email)) {
+                showAlert('adminAlert', 'Por favor, ingrese un correo electrónico válido.', 'error');
+                return;
+            }
+            
+            if (currentVoters.includes(email)) {
+                showAlert('adminAlert', 'Este correo electrónico ya ha sido agregado.', 'error');
+                return;
+            }
+            
+            currentVoters.push(email);
+            renderVoterList();
+            document.getElementById('voterEmailInput').value = '';
+            showAlert('adminAlert', 'Votante agregado correctamente.', 'success');
+        }
+
+        // Renderizar lista de votantes
+        function renderVoterList() {
+            const voterList = document.getElementById('voterList');
+            voterList.innerHTML = '';
+            
+            if (currentVoters.length === 0) {
+                voterList.innerHTML = '<p style="text-align: center; color: var(--gray-color); padding: 20px;">No hay votantes agregados</p>';
+                document.getElementById('exportVotersBtn').style.display = 'none';
+            } else {
+                currentVoters.forEach((voterEmail, index) => {
+                    const voterItem = document.createElement('div');
+                    voterItem.className = 'voter-item';
+                    voterItem.innerHTML = `
+                        <div class="voter-info">
+                            <span class="voter-email">${voterEmail}</span>
+                        </div>
+                        <span class="remove-voter" onclick="removeVoter(${index})">❌</span>
+                    `;
+                    voterList.appendChild(voterItem);
+                });
+                document.getElementById('exportVotersBtn').style.display = 'block';
+            }
+        }
+
+        // Eliminar votante
+        function removeVoter(index) {
+            currentVoters.splice(index, 1);
+            renderVoterList();
+        }
+
         // Manejar la creación de una nueva elección
         function handleCreateElection(e) {
             e.preventDefault();
             
             const name = document.getElementById('electionName').value;
             const description = document.getElementById('electionDescription').value;
-            const candidatesInput = document.getElementById('candidates').value;
-            const voterEmailsInput = document.getElementById('voterEmails').value;
             
-            // Separar los candidatos por comas y limpiar espacios
-            const candidates = candidatesInput.split(',').map(candidate => candidate.trim());
-            const voters = voterEmailsInput.split(',').map(email => email.trim());
-            
-            // Validar que haya al menos 2 candidatos
-            if (candidates.length < 2) {
+            if (currentCandidates.length < 2) {
                 showAlert('adminAlert', 'Debe haber al menos 2 candidatos.', 'error');
                 return;
             }
             
-            // Validar que haya al menos 1 votante
-            if (voters.length < 1) {
+            if (currentVoters.length < 1) {
                 showAlert('adminAlert', 'Debe haber al menos 1 votante.', 'error');
                 return;
             }
             
-            // Crear nueva elección
             const newElection = {
                 id: elections.length > 0 ? Math.max(...elections.map(e => e.id)) + 1 : 1,
                 name,
                 description,
-                candidates,
+                candidates: [...currentCandidates],
                 votes: {},
-                voters
+                voters: [...currentVoters]
             };
             
             elections.push(newElection);
-            
-            // Limpiar el formulario
             document.getElementById('createElectionForm').reset();
-            
-            // Recargar el panel de administración
+            currentVoters = [];
+            currentCandidates = [];
+            renderVoterList();
+            renderCandidateList();
+            document.getElementById('candidatePhotoPreview').innerHTML = '';
             loadAdminPanel();
-            
             showAlert('adminAlert', 'Elección creada exitosamente.', 'success');
-            
-            // Guardar en localStorage
             saveData();
         }
 
@@ -791,14 +1481,16 @@
                 const candidateCard = document.createElement('div');
                 candidateCard.className = 'candidate-card';
                 candidateCard.innerHTML = `
-                    <div class="candidate-image">${candidate.charAt(0)}</div>
-                    <h3>${candidate}</h3>
+                    ${candidate.photo ? 
+                        `<img src="${candidate.photo}" class="candidate-image" alt="${candidate.name}">` :
+                        `<div class="candidate-image">${candidate.name.charAt(0)}</div>`
+                    }
+                    <h3>${candidate.name}</h3>
                 `;
                 candidateCard.addEventListener('click', () => selectCandidate(index, candidateCard));
                 candidatesList.appendChild(candidateCard);
             });
             
-            // Verificar si el usuario ya votó
             if (currentElection.votes[currentUser.email] !== undefined) {
                 document.getElementById('submitVote').style.display = 'none';
                 showAlert('voteAlert', 'Usted ya ha votado en esta elección.', 'error');
@@ -809,12 +1501,9 @@
 
         // Seleccionar un candidato
         function selectCandidate(candidateIndex, candidateElement) {
-            // Deseleccionar todos los candidatos
             document.querySelectorAll('.candidate-card').forEach(card => {
                 card.classList.remove('selected');
             });
-            
-            // Seleccionar el candidato clickeado
             candidateElement.classList.add('selected');
             selectedCandidate = candidateIndex;
         }
@@ -826,13 +1515,8 @@
                 return;
             }
             
-            // Registrar el voto
             currentElection.votes[currentUser.email] = selectedCandidate;
-            
-            // Guardar en localStorage
             saveData();
-            
-            // Mostrar confirmación
             showPage('voteConfirmation');
         }
 
@@ -841,7 +1525,109 @@
             const election = elections.find(e => e.id === electionId);
             if (!election) return;
             
-            // Calcular resultados
+            currentElection = election;
+            document.getElementById('resultsModalTitle').textContent = `📊 Resultados: ${election.name}`;
+            document.getElementById('resultsModal').style.display = 'flex';
+            
+            createResultsChart('bar');
+            showResultsDetails(election);
+        }
+
+        // Crear gráfico de resultados
+        function createResultsChart(type = 'bar') {
+            const ctx = document.getElementById('resultsChart').getContext('2d');
+            
+            if (resultsChart) {
+                resultsChart.destroy();
+            }
+            
+            const results = {};
+            currentElection.candidates.forEach((candidate, index) => {
+                results[index] = 0;
+            });
+            
+            Object.values(currentElection.votes).forEach(vote => {
+                results[vote] = (results[vote] || 0) + 1;
+            });
+            
+            const totalVotes = Object.values(currentElection.votes).length;
+            const labels = currentElection.candidates.map(c => c.name);
+            const votesData = currentElection.candidates.map((_, index) => results[index] || 0);
+            const percentages = votesData.map(votes => totalVotes > 0 ? (votes / totalVotes * 100) : 0);
+            
+            const backgroundColors = [
+                'rgba(52, 152, 219, 0.8)',
+                'rgba(46, 204, 113, 0.8)',
+                'rgba(155, 89, 182, 0.8)',
+                'rgba(241, 196, 15, 0.8)',
+                'rgba(230, 126, 34, 0.8)',
+                'rgba(231, 76, 60, 0.8)'
+            ];
+            
+            const config = {
+                type: type,
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Porcentaje de Votos',
+                        data: percentages,
+                        backgroundColor: backgroundColors.slice(0, labels.length),
+                        borderColor: backgroundColors.slice(0, labels.length).map(color => color.replace('0.8', '1')),
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        title: {
+                            display: true,
+                            text: `Distribución de Votos - Total: ${totalVotes} votos`
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.raw || 0;
+                                    const votes = votesData[context.dataIndex];
+                                    return `${label}: ${value.toFixed(1)}% (${votes} votos)`;
+                                }
+                            }
+                        }
+                    },
+                    scales: type === 'bar' ? {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                callback: function(value) {
+                                    return value + '%';
+                                }
+                            },
+                            title: {
+                                display: true,
+                                text: 'Porcentaje de Votos'
+                            }
+                        }
+                    } : {}
+                }
+            };
+            
+            resultsChart = new Chart(ctx, config);
+        }
+
+        // Actualizar tipo de gráfico
+        function updateChart(type) {
+            createResultsChart(type);
+        }
+
+        // Mostrar detalles de resultados
+        function showResultsDetails(election) {
+            const resultsDetails = document.getElementById('resultsDetails');
+            
             const results = {};
             election.candidates.forEach((candidate, index) => {
                 results[index] = 0;
@@ -851,62 +1637,99 @@
                 results[vote] = (results[vote] || 0) + 1;
             });
             
-            // Mostrar resultados en un modal
-            let resultsHTML = `<h3>Resultados: ${election.name}</h3>`;
-            resultsHTML += `<p>Total de votos: ${Object.values(election.votes).length}</p>`;
-            resultsHTML += '<div class="results-chart">';
+            const totalVotes = Object.values(election.votes).length;
+            const totalVoters = election.voters.length;
+            const participation = totalVoters > 0 ? (totalVotes / totalVoters * 100).toFixed(1) : 0;
+            
+            let maxVotes = 0;
+            let winners = [];
             
             election.candidates.forEach((candidate, index) => {
                 const votes = results[index] || 0;
-                const percentage = Object.values(election.votes).length > 0 ? 
-                    (votes / Object.values(election.votes).length * 100).toFixed(1) : 0;
+                if (votes > maxVotes) {
+                    maxVotes = votes;
+                    winners = [candidate.name];
+                } else if (votes === maxVotes && votes > 0) {
+                    winners.push(candidate.name);
+                }
+            });
+            
+            let resultsHTML = `
+                <div style="background: #f8f9fa; padding: 20px; border-radius: var(--border-radius); margin-top: 25px;">
+                    <h4 style="color: var(--primary-color); margin-bottom: 15px;">📈 Estadísticas Detalladas</h4>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                        <div style="background: white; padding: 15px; border-radius: var(--border-radius); text-align: center;">
+                            <div style="font-size: 1.8rem; font-weight: bold; color: var(--primary-color);">${totalVotes}</div>
+                            <div style="color: var(--gray-color);">Votos Emitidos</div>
+                        </div>
+                        <div style="background: white; padding: 15px; border-radius: var(--border-radius); text-align: center;">
+                            <div style="font-size: 1.8rem; font-weight: bold; color: var(--primary-color);">${totalVoters}</div>
+                            <div style="color: var(--gray-color);">Total de Votantes</div>
+                        </div>
+                        <div style="background: white; padding: 15px; border-radius: var(--border-radius); text-align: center;">
+                            <div style="font-size: 1.8rem; font-weight: bold; color: var(--primary-color);">${participation}%</div>
+                            <div style="color: var(--gray-color);">Participación</div>
+                        </div>
+                    </div>
+            `;
+            
+            if (winners.length > 0 && maxVotes > 0) {
+                const winnerPercentage = totalVotes > 0 ? ((maxVotes / totalVotes) * 100).toFixed(1) : 0;
+                resultsHTML += `
+                    <div style="background: rgba(39, 174, 96, 0.1); padding: 15px; border-radius: var(--border-radius); border-left: 5px solid var(--success-color); margin-bottom: 15px;">
+                        <h5 style="color: var(--success-color); margin-bottom: 10px;">🏆 ${winners.length > 1 ? 'Empate' : 'Ganador'}</h5>
+                        <p style="font-size: 1.1rem; font-weight: 600;">${winners.join(', ')}</p>
+                        <p style="color: var(--gray-color); margin-top: 5px;">${maxVotes} votos (${winnerPercentage}%)</p>
+                    </div>
+                `;
+            }
+            
+            resultsHTML += `
+                <div style="margin-top: 20px;">
+                    <h5 style="color: var(--primary-color); margin-bottom: 15px;">📋 Resultados por Candidato</h5>
+            `;
+            
+            election.candidates.forEach((candidate, index) => {
+                const votes = results[index] || 0;
+                const percentage = totalVotes > 0 ? (votes / totalVotes * 100) : 0;
+                const color = ['#3498db', '#2ecc71', '#9b59b6', '#f1c40f', '#e67e22', '#e74c3c'][index % 6];
                 
                 resultsHTML += `
-                    <div class="result-bar">
-                        <div class="result-label">${candidate}</div>
-                        <div class="result-bar-inner" style="width: ${percentage}%">
-                            ${votes} votos (${percentage}%)
+                    <div style="margin-bottom: 15px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <div style="width: 12px; height: 12px; border-radius: 50%; background: ${color};"></div>
+                                <span style="font-weight: 600;">${candidate.name}</span>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="font-weight: bold; font-size: 1.1rem;">${percentage.toFixed(1)}%</div>
+                                <div style="color: var(--gray-color); font-size: 0.9rem;">${votes} votos</div>
+                            </div>
+                        </div>
+                        <div class="percentage-bar">
+                            <div class="percentage-fill" style="width: ${percentage}%; background: ${color};">
+                                <span class="percentage-text">${percentage.toFixed(1)}%</span>
+                            </div>
                         </div>
                     </div>
                 `;
             });
             
-            resultsHTML += '</div>';
+            resultsHTML += `
+                </div>
+            </div>
+            `;
             
-            // Crear modal de resultados
-            const modal = document.createElement('div');
-            modal.style.position = 'fixed';
-            modal.style.top = '0';
-            modal.style.left = '0';
-            modal.style.width = '100%';
-            modal.style.height = '100%';
-            modal.style.backgroundColor = 'rgba(0,0,0,0.5)';
-            modal.style.display = 'flex';
-            modal.style.alignItems = 'center';
-            modal.style.justifyContent = 'center';
-            modal.style.zIndex = '1000';
-            
-            const modalContent = document.createElement('div');
-            modalContent.className = 'card';
-            modalContent.style.maxWidth = '90%';
-            modalContent.style.maxHeight = '80%';
-            modalContent.style.overflow = 'auto';
-            modalContent.innerHTML = resultsHTML;
-            
-            const closeButton = document.createElement('button');
-            closeButton.textContent = 'Cerrar';
-            closeButton.onclick = () => document.body.removeChild(modal);
-            modalContent.appendChild(closeButton);
-            
-            modal.appendChild(modalContent);
-            document.body.appendChild(modal);
-            
-            // Cerrar modal al hacer clic fuera
-            modal.onclick = (e) => {
-                if (e.target === modal) {
-                    document.body.removeChild(modal);
-                }
-            };
+            resultsDetails.innerHTML = resultsHTML;
+        }
+
+        // Cerrar modal de resultados
+        function closeResultsModal() {
+            document.getElementById('resultsModal').style.display = 'none';
+            if (resultsChart) {
+                resultsChart.destroy();
+                resultsChart = null;
+            }
         }
 
         // Eliminar una elección
@@ -924,11 +1747,136 @@
             alertContainer.innerHTML = `
                 <div class="alert alert-${type}">${message}</div>
             `;
-            
-            // Auto-ocultar la alerta después de 5 segundos
             setTimeout(() => {
                 alertContainer.innerHTML = '';
             }, 5000);
+        }
+
+        // Validar email
+        function isValidEmail(email) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return emailRegex.test(email);
+        }
+
+        // Descargar plantilla de Excel
+        function downloadTemplate() {
+            const templateData = [
+                ['Correo Electrónico'],
+                ['votante1@ejemplo.com'],
+                ['votante2@ejemplo.com']
+            ];
+            
+            const ws = XLSX.utils.aoa_to_sheet(templateData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Votantes');
+            XLSX.writeFile(wb, 'plantilla_votantes.xlsx');
+        }
+
+        // Manejar subida de archivo Excel
+        function handleExcelUpload() {
+            const fileInput = document.getElementById('excelFile');
+            const file = fileInput.files[0];
+            
+            if (!file) return;
+            
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+                const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                
+                if (jsonData.length < 1 || jsonData[0][0] !== 'Correo Electrónico') {
+                    showAlert('adminAlert', 'El archivo no tiene el formato correcto.', 'error');
+                    return;
+                }
+                
+                const newVoters = [];
+                
+                for (let i = 1; i < jsonData.length; i++) {
+                    const row = jsonData[i];
+                    if (row.length >= 1 && row[0]) {
+                        const email = row[0].toString().trim();
+                        if (isValidEmail(email)) {
+                            newVoters.push(email);
+                        }
+                    }
+                }
+                
+                if (newVoters.length === 0) {
+                    showAlert('adminAlert', 'No se encontraron votantes válidos.', 'error');
+                    return;
+                }
+                
+                currentVoters = [...currentVoters, ...newVoters];
+                renderVoterList();
+                showAlert('adminAlert', `${newVoters.length} votantes importados.`, 'success');
+                fileInput.value = '';
+            };
+            
+            reader.readAsArrayBuffer(file);
+        }
+
+        // Exportar lista de votantes
+        function exportVoters() {
+            if (currentVoters.length === 0) {
+                showAlert('adminAlert', 'No hay votantes para exportar.', 'error');
+                return;
+            }
+            
+            const data = [['Correo Electrónico']];
+            currentVoters.forEach(voter => data.push([voter]));
+            
+            const ws = XLSX.utils.aoa_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Votantes');
+            XLSX.writeFile(wb, 'lista_votantes.xlsx');
+        }
+
+        // Exportar resultados de elección
+        function exportResults() {
+            if (!currentElection) return;
+            
+            const results = {};
+            currentElection.candidates.forEach((candidate, index) => {
+                results[index] = 0;
+            });
+            
+            Object.values(currentElection.votes).forEach(vote => {
+                results[vote] = (results[vote] || 0) + 1;
+            });
+            
+            const totalVotes = Object.values(currentElection.votes).length;
+            const totalVoters = currentElection.voters.length;
+            const participation = totalVoters > 0 ? (totalVotes / totalVoters * 100).toFixed(1) : 0;
+            
+            const data = [
+                ['REPORTE DE RESULTADOS'],
+                [],
+                ['Elección:', currentElection.name],
+                ['Descripción:', currentElection.description],
+                ['Fecha:', new Date().toLocaleDateString()],
+                [],
+                ['ESTADÍSTICAS'],
+                ['Total votantes:', totalVoters],
+                ['Votos emitidos:', totalVotes],
+                ['Participación:', `${participation}%`],
+                [],
+                ['RESULTADOS POR CANDIDATO'],
+                ['Candidato', 'Votos', 'Porcentaje']
+            ];
+            
+            currentElection.candidates.forEach((candidate, index) => {
+                const votes = results[index] || 0;
+                const percentage = totalVotes > 0 ? (votes / totalVotes * 100).toFixed(1) : 0;
+                data.push([candidate.name, votes, `${percentage}%`]);
+            });
+            
+            const ws = XLSX.utils.aoa_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Resultados');
+            XLSX.writeFile(wb, `resultados_${currentElection.name.replace(/\s+/g, '_')}.xlsx`);
         }
 
         // Guardar datos en localStorage
@@ -969,51 +1917,11 @@
                 deferredPrompt.prompt();
                 deferredPrompt.userChoice.then((choiceResult) => {
                     if (choiceResult.outcome === 'accepted') {
-                        console.log('Usuario aceptó la instalación');
                         document.getElementById('installBtn').style.display = 'none';
                     }
                     deferredPrompt = null;
                 });
             }
-        });
-
-        // Inicialización
-        document.addEventListener('DOMContentLoaded', () => {
-            showPage('home');
-            loadData();
-            
-            // Verificar si la app ya está instalada
-            if (window.matchMedia('(display-mode: standalone)').matches) {
-                document.getElementById('installBtn').style.display = 'none';
-            }
-        });
-    </script>
-
-    <script>
-        // Service Worker simplificado (se ejecutaría en un archivo separado en producción)
-        const staticCacheName = 'voto-electronico-v1';
-        const assets = [
-            '/',
-            '/index.html',
-            '/manifest.json'
-        ];
-
-        self.addEventListener('install', event => {
-            event.waitUntil(
-                caches.open(staticCacheName)
-                    .then(cache => {
-                        return cache.addAll(assets);
-                    })
-            );
-        });
-
-        self.addEventListener('fetch', event => {
-            event.respondWith(
-                caches.match(event.request)
-                    .then(response => {
-                        return response || fetch(event.request);
-                    })
-            );
         });
     </script>
 </body>
